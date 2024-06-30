@@ -1,0 +1,17 @@
+#showpage1 {
+    font-size: large;
+}
+
+:host {
+    --dile-tab-background-color: rgb(0, 255, 17);
+  }
+  
+  /* Apply the variable to a specific element */
+  article .selected {
+    background-color: green;
+  }
+
+  .tooltip_tooltip-icon__2w4kL {
+    width: 23px;
+  }
+ 
