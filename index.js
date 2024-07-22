@@ -1,5 +1,7 @@
 import '@dile/ui/components/pages/pages.js';
 import '@dile/ui/components/modal/modal';
+import '@dile/ui/components/toast/toast';
+import '@dile/ui/components/icon/icon'
 
 import { LitElement, html, css } from 'lit';
 
@@ -139,16 +141,18 @@ render() {
   `
 }
 //first updated into the index.js file
-firstUpdated() {
-  this.shadowRoot.getElementById('preview-btn').addEventListener('click', () => {
-    this.shadowRoot.getElementById('elmodal4').open();
-  });
-  
-  this.dispatchEvent(new CustomEvent('modal-ready', { bubbles: true, composed: true }));
-}
+  firstUpdated() {
+    this.shadowRoot.getElementById('preview-btn').addEventListener('click', () => {
+      this.shadowRoot.getElementById('elmodal4').open();
+    });
+    
+    this.dispatchEvent(new CustomEvent('modal-ready', { bubbles: true, composed: true }));
+  }
 
 }
 
+
+/////////////
 
 customElements.define('modal-component', ModalComponent);
 customElements.define('my-component', MyComponent);

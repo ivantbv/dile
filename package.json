@@ -11,7 +11,12 @@
   "author": "Ivan Georgiev",
   "license": "ISC",
   "dependencies": {
-    "@dile/ui": "^2.1.4"
+    "@dile/ui": "^2.1.4",
+    "chart.js": "^4.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "path": "^0.12.7",
+    "pg": "^8.12.0"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
