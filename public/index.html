@@ -5,7 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frontend tests</title>
-    <!-- <link rel="stylesheet" href="../styles.css"> -->
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+      body {
+        font-family: Helvetica, sans-serif;
+      }
+
+    </style>
 </head>
 <body>
 
@@ -32,7 +38,7 @@
       </main>
       
       
-      <div class="shoutbox">
+      <!-- <div class="shoutbox">
         <h2>ShoutBox</h2>
         <div id="comments"></div>
         <form id="shoutbox-form">
@@ -40,12 +46,67 @@
             <textarea id="comment" placeholder="Your comment" required></textarea>
             <button type="submit">Post</button>
         </form>
-      </div>
-      
-    
-    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+      </div> -->
+      <div id="shoutbox-container"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script>
+      <!-- <div class="shoutbox">
+        <button data-v-3953a215="" 
+          class="btn2 btn2--tertiary btn2--circle with-indicator comments-action" data-tippy=""
+          data-original-title="Feedback">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" 
+            xmlns="http://www.w3.org/2000/svg" svg-inline="" role="presentation" 
+            focusable="false" tabindex="-1">
+            <path d="M14 8a6 6 0 01-8.256 5.561c-.134-.054-.2-.08-.254-.093a.606.606 0 00-.146-.016c-.055 0-.115.01-.236.03l-2.371.395c-.249.042-.373.062-.463.024a.333.333 0 01-.175-.175c-.038-.09-.018-.214.024-.463l.395-2.371c.02-.12.03-.18.03-.236a.606.606 0 00-.016-.146c-.012-.054-.04-.12-.093-.254A6 6 0 1114 8z" 
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            </path>
+          </svg> 
+          <span class="accessibility-text">
+              View comments
+            </span> 
+            <span class="count-indicator">
+              6
+            </span>
+        </button>
+        <h2>ShoutBox</h2>
+        <div class="chat-container">
+          <header class="shout-header">
+            <div class="shout-header-title">
+              <svg width="30" height="30" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg">
+                <g fill="none" fill-rule="evenodd"><path fill="#61ad3b" 
+                  d="M12 6a6 6 0 0 1-6 6 6 6 0 0 1-6-6 6 6 0 0 1 12 0"/>
+                  <path fill="#FFF" 
+                  d="M6.105 8.747a4.3 4.3 0 0 0 .782-.128 2.14 2.14 0 0 0 .976.064l.039-.003c.116 0 .269.068.491.21v-.234a.23.23 0 0 1 .117-.199q.146-.083.269-.187c.324-.274.507-.64.507-1.028q-.001-.196-.06-.377.147-.274.235-.574a1.73 1.73 0 0 1 .289.95c0 .527-.245 1.018-.669 1.377a2 2 0 0 1-.223.166v.548a.233.233 0 0 1-.371.185 6 6 0 0 0-.45-.304 1 1 0 0 0-.138-.07q-.192.029-.39.029a2.5 2.5 0 0 1-1.404-.425m-2.8-1.096c-.669-.567-1.055-1.34-1.055-2.169 0-1.692 1.597-3.045 3.546-3.045S9.343 3.79 9.343 5.482c0 1.693-1.597 3.045-3.547 3.045q-.329 0-.648-.051c-.092.022-.459.24-.988.626a.291.291 0 0 1-.464-.231v-.934a3.4 3.4 0 0 1-.392-.287m1.856.25q.024 0 .049.004.288.049.587.049c1.647 0 2.965-1.117 2.965-2.471s-1.318-2.47-2.965-2.47-2.965 1.117-2.965 2.47c0 .655.308 1.271.852 1.732q.206.174.449.312c.09.051.146.146.146.249v.539c.419-.281.694-.414.883-.414m-.876-1.844a.46.46 0 0 1-.465-.46c0-.254.208-.46.465-.46s.465.206.465.46-.208.46-.465.46m1.512 0a.46.46 0 0 1-.465-.46c0-.254.208-.46.465-.46s.465.206.465.46-.208.46-.465.46m1.512 0a.46.46 0 0 1-.465-.46c0-.254.208-.46.465-.46s.465.206.465.46-.208.46-.465.46"/>
+                </g>
+              </svg>
+              Кри-Чат
+            </div>  
+          </header>
+          <div id="comments" class="scrollable"></div>
+          <form id="shoutbox-form">
+            <input type="text" id="username" placeholder="Username" required>
+            <textarea id="comment" placeholder="Your comment" required></textarea>
+            <button type="submit">Post</button>
+            <label><input type="checkbox" id="isAdmin"> Is Admin</label>
+          </form>
+        </div>
+       
+      </div> -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script> -->
     <script type="module" src="./bundle.js"></script>
+    <script src="/main.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        window.initializeShoutbox({
+          wsUrl: 'ws://127.0.0.1:4000',
+          endpointShoutBoxComment: 'http://127.0.0.1:4000/shoutbox/comments',
+          endPointShoutBoxPin: 'http://127.0.0.1:4000/shoutbox/pin',
+          //customCSS: 'https://'
+          email: 'ivan.georgiev@x5.ru'
+        })
+      })
+    </script>
 </body>
 </html>

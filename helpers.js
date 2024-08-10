@@ -117,7 +117,7 @@ function updatePreviewHeader(text) {
       "Событие": "rate",
       "Номер вопроса": 7,
       "Вопрос": "\"Насколько качественно вам предоставляется обратная связь по вашим запросам от сервис-менеджера ?Оцените от 1 до 10, укажите комментарии в случае оценки ниже 7.\"",
-      "Оценка": "9",
+      "Оценка": "Правда",
       "Комментарий": "",
       "Сотрудник": "example4@example.ru",
       "Должность": "Специалист",
@@ -130,7 +130,7 @@ function updatePreviewHeader(text) {
     "Событие": "rate",
     "Номер вопроса": 7,
     "Вопрос": "\"Насколько качественно вам предоставляется обратная связь по вашим запросам от сервис-менеджера ?Оцените от 1 до 10, укажите комментарии в случае оценки ниже 7.\"",
-    "Оценка": "9",
+    "Оценка": "Миф",
     "Комментарий": "",
     "Сотрудник": "example4@example.ru",
     "Должность": "Специалист",
@@ -142,8 +142,21 @@ function updatePreviewHeader(text) {
   "Дата и время": "19/06/2024 17:08:29",
   "Событие": "rate",
   "Номер вопроса": 7,
-  "Вопрос": "\"Насколько качественно вам предоставляется обратная связь по вашим запросам от сервис-менеджера ?Оцените от 1 до 10, укажите комментарии в случае оценки ниже 7.\"",
-  "Оценка": "2",
+  "Вопрос": "\"Может ли ЧБ заменить чела\"",
+  "Оценка": "Миф",
+  "Комментарий": "",
+  "Сотрудник": "example4@example.ru",
+  "Должность": "Специалист",
+  "Табельный Номер": "21998909",
+  "Подразделение": "Централизованные фун",
+  "Дивижн": "Отдел контроля и учета ЕГАИС"
+},
+{
+  "Дата и время": "19/06/2024 17:08:29",
+  "Событие": "rate",
+  "Номер вопроса": 7,
+  "Вопрос": "\"Правда ли что ЧБ решает обращения лучше\"",
+  "Оценка": "Правда",
   "Комментарий": "",
   "Сотрудник": "example4@example.ru",
   "Должность": "Специалист",
@@ -156,7 +169,7 @@ function updatePreviewHeader(text) {
   "Событие": "rate",
   "Номер вопроса": 7,
   "Вопрос": "\"Насколько качественно вам предоставляется обратная связь по вашим запросам от сервис-менеджера ?Оцените от 1 до 10, укажите комментарии в случае оценки ниже 7.\"",
-  "Оценка": "5",
+  "Оценка": "Правда",
   "Комментарий": "",
   "Сотрудник": "example4@example.ru",
   "Должность": "Специалист",
@@ -169,20 +182,7 @@ function updatePreviewHeader(text) {
   "Событие": "rate",
   "Номер вопроса": 7,
   "Вопрос": "\"Насколько качественно вам предоставляется обратная связь по вашим запросам от сервис-менеджера ?Оцените от 1 до 10, укажите комментарии в случае оценки ниже 7.\"",
-  "Оценка": "5",
-  "Комментарий": "",
-  "Сотрудник": "example4@example.ru",
-  "Должность": "Специалист",
-  "Табельный Номер": "21998909",
-  "Подразделение": "Централизованные фун",
-  "Дивижн": "Отдел контроля и учета ЕГАИС"
-},
-{
-  "Дата и время": "19/06/2024 17:08:29",
-  "Событие": "rate",
-  "Номер вопроса": 7,
-  "Вопрос": "\"Насколько качественно вам предоставляется обратная связь по вашим запросам от сервис-менеджера ?Оцените от 1 до 10, укажите комментарии в случае оценки ниже 7.\"",
-  "Оценка": "2",
+  "Оценка": "Миф",
   "Комментарий": "",
   "Сотрудник": "example4@example.ru",
   "Должность": "Специалист",
@@ -208,7 +208,7 @@ function updatePreviewHeader(text) {
   "Событие": "rate",
   "Номер вопроса": 8,
   "Вопрос": "\"Напишите ваши предложения по улучшению взаимодействия с сервис-менеджеров Х Технологии.\"",
-  "Оценка": "Как там таблички",
+  "Оценка": "Миф",
   "Комментарий": "",
   "Сотрудник": "example@example.com",
   "Должность": "Специалист",
@@ -221,7 +221,7 @@ function updatePreviewHeader(text) {
   "Событие": "rate",
   "Номер вопроса": 8,
   "Вопрос": "\"Напишите ваши предложения по улучшению взаимодействия с сервис-менеджеров Х Технологии.\"",
-  "Оценка": "Как там все ли ок",
+  "Оценка": "Правда",
   "Комментарий": "",
   "Сотрудник": "example@example.com",
   "Должность": "Специалист",
@@ -234,7 +234,7 @@ function updatePreviewHeader(text) {
   "Событие": "rate",
   "Номер вопроса": 8,
   "Вопрос": "\"Напишите ваши предложения по улучшению взаимодействия с сервис-менеджеров Х Технологии.\"",
-  "Оценка": "Как там все ли ок",
+  "Оценка": "Правда",
   "Комментарий": "",
   "Сотрудник": "example@example.com",
   "Должность": "Специалист",
@@ -247,7 +247,7 @@ function updatePreviewHeader(text) {
   "Событие": "rate",
   "Номер вопроса": 7,
   "Вопрос": "asddsa тест вопрос асдадсаасд асд",
-  "Оценка": "дса тест оценка ааааааа аааааа   аааааааа ааааа аааааа аса дсааа сссссссссссс дс",
+  "Оценка": "Миф",
   "Комментарий": "",
   "Сотрудник": "example4@example.ru",
   "Должность": "Специалист",
@@ -256,123 +256,6 @@ function updatePreviewHeader(text) {
   "Дивижн": "Отдел контроля и учета ЕГАИС"
 },
 ];
-
-// function distributeRating(data) {
-//   const numericalRatings = {};
-//   const nonNumericalRatings = {};
-
-//   data.forEach(entry => {
-//       const rating = entry.Оценка;
-//       const question = entry.Вопрос;
-//       if (!isNaN(rating)) { // Ensure the rating is a number and not "Предложений нет"
-//           const numericRating = parseInt(rating, 10);
-//           if (numericalRatings.hasOwnProperty(numericRating)) {
-//               numericalRatings[numericRating].count++;
-//               if (!numericalRatings[numericRating].questions.includes(question)) {
-//                   numericalRatings[numericRating].questions.push(question);
-//               }
-//           } else {
-//               numericalRatings[numericRating] = { count: 1, questions: [question] };
-//           }
-//       } else {
-//           if (nonNumericalRatings.hasOwnProperty(rating)) {
-//               nonNumericalRatings[rating].count++;
-//               if (!nonNumericalRatings[rating].questions.includes(question)) {
-//                   nonNumericalRatings[rating].questions.push(question);
-//               }
-//           } else {
-//               nonNumericalRatings[rating] = { count: 1, questions: [question] };
-//           }
-//       }
-//   });
-
-//   return { numericalRatings, nonNumericalRatings };
-// }
-
-// let { numericalRatings, nonNumericalRatings } = distributeRating(data);
-
-// const numericalLabels = Object.keys(numericalRatings);
-// const numericalValues = Object.values(numericalRatings).map(item => item.count);
-// const numericalQuestions = Object.values(numericalRatings).map(item => item.questions.join('\n'));
-
-// const nonNumericalLabels = Object.keys(nonNumericalRatings);
-// const nonNumericalValues = Object.values(nonNumericalRatings).map(item => item.count);
-// const nonNumericalQuestions = Object.values(nonNumericalRatings).map(item => item.questions.join('\n'));
-
-// // Numerical Rating Chart
-// const numericalCtx = document.getElementById('numericalRatingChart').getContext('2d');
-// const numericalRatingChart = new Chart(numericalCtx, {
-//   type: 'bar',
-//   data: {
-//       labels: numericalLabels,
-//       datasets: [{
-//           label: 'Общее количество оценок (Numerical)',
-//           data: numericalValues,
-//           backgroundColor: 'rgba(75, 192, 192, 0.2)',
-//           borderColor: 'rgba(85, 192, 192, 1)',
-//           borderWidth: 1,
-//           maxBarThickness: 250
-//       }],
-//   },
-//   options: {
-//       scales: {
-//           y: {
-//               beginAtZero: true,
-//               ticks: {
-//                   stepSize: 1
-//               }
-//           }
-//       },
-//       plugins: {
-//           tooltip: {
-//               callbacks: {
-//                   afterLabel: function(context) {
-//                       return numericalQuestions[context.dataIndex];
-//                   }
-//               }
-//           }
-//       }
-//   }
-// });
-
-// // Non-Numerical Rating Chart
-// const nonNumericalCtx = document.getElementById('nonNumericalRatingChart').getContext('2d');
-// const nonNumericalRatingChart = new Chart(nonNumericalCtx, {
-//   type: 'bar',
-//   data: {
-//       labels: nonNumericalLabels,
-//       datasets: [{
-//           label: 'Общее количество оценок (Non-Numerical)',
-//           data: nonNumericalValues,
-//           backgroundColor: 'rgba(255, 159, 64, 0.2)',
-//           borderColor: 'rgba(255, 159, 64, 1)',
-//           borderWidth: 1,
-//           maxBarThickness: 250
-//       }],
-//   },
-//   options: {
-//       scales: {
-//           y: {
-//               beginAtZero: true,
-//               ticks: {
-//                   stepSize: 1
-//               }
-//           },
-//       },
-//       plugins: {
-//           tooltip: {
-//               callbacks: {
-//                   afterLabel: function(context) {
-//                       return nonNumericalQuestions[context.dataIndex];
-//                   }
-//               }
-//           }
-//       }
-//   }
-// });
-
-
-
 // Initialize empty objects globally
 let numericalRatings = {};
 let nonNumericalRatings = {};
@@ -381,165 +264,117 @@ let nonNumericalRatings = {};
 let numericalChartInstance = null;
 let nonNumericalChartInstance = null;
 
-// Call distributeRating with the data
-const result = distributeRating(data); 
-numericalRatings = result.numericalRatings;
-nonNumericalRatings = result.nonNumericalRatings;
-
-// Now you can use these objects to create charts or do other operations
-createCharts(numericalRatings, nonNumericalRatings);
-
-
-
 function distributeRating(data) {
-const numericalRatings = {};
-const nonNumericalRatings = {};
+  const numericalRatings = {};
+  const nonNumericalRatings = {};
 
-data.forEach(entry => {
-  const rating = entry.Оценка ? entry.Оценка : entry.Комментарий;
-  const question = entry.Вопрос;
-  if (!rating || !question) {
-      return;
-  }
-  if (!isNaN(rating)) { 
-      const numericRating = parseInt(rating, 10);
-      if (numericalRatings.hasOwnProperty(numericRating)) {
-          numericalRatings[numericRating].count++;
-          if (!numericalRatings[numericRating].questions.includes(question)) {
-              numericalRatings[numericRating].questions.push(question);
+  data.forEach(entry => {
+      const rating = entry.Оценка;
+      const question = entry.Вопрос;
+      if (!isNaN(rating)) { // Ensure the rating is a number and not "Предложений нет"
+          const numericRating = parseInt(rating, 10);
+          if (numericalRatings.hasOwnProperty(numericRating)) {
+              numericalRatings[numericRating].count++;
+              if (!numericalRatings[numericRating].questions.includes(question)) {
+                  numericalRatings[numericRating].questions.push(question);
+              }
+          } else {
+              numericalRatings[numericRating] = { count: 1, questions: [question] };
           }
       } else {
-          numericalRatings[numericRating] = { count: 1, questions: [question] };
+          if (nonNumericalRatings.hasOwnProperty(rating)) {
+              nonNumericalRatings[rating].count++;
+              if (!nonNumericalRatings[rating].questions.includes(question)) {
+                  nonNumericalRatings[rating].questions.push(question);
+              }
+          } else {
+              nonNumericalRatings[rating] = { count: 1, questions: [question] };
+          }
       }
-  } else {
-      if (nonNumericalRatings.hasOwnProperty(rating)) {
-          nonNumericalRatings[rating].count++;
-          if (!nonNumericalRatings[rating].questions.includes(question)) {
-              nonNumericalRatings[rating].questions.push(question);
+  });
+
+  return { numericalRatings, nonNumericalRatings };
+}
+
+// let { numericalRatings, nonNumericalRatings } = distributeRating(data);
+
+const numericalLabels = Object.keys(numericalRatings);
+const numericalValues = Object.values(numericalRatings).map(item => item.count);
+const numericalQuestions = Object.values(numericalRatings).map(item => item.questions.join('\n'));
+
+const nonNumericalLabels = Object.keys(nonNumericalRatings);
+const nonNumericalValues = Object.values(nonNumericalRatings).map(item => item.count);
+const nonNumericalQuestions = Object.values(nonNumericalRatings).map(item => item.questions.join('\n'));
+
+// Numerical Rating Chart
+const numericalCtx = document.getElementById('numericalRatingChart').getContext('2d');
+const numericalRatingChart = new Chart(numericalCtx, {
+  type: 'bar',
+  data: {
+      labels: numericalLabels,
+      datasets: [{
+          label: 'Общее количество оценок (Numerical)',
+          data: numericalValues,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(85, 192, 192, 1)',
+          borderWidth: 1,
+          maxBarThickness: 250
+      }],
+  },
+  options: {
+      scales: {
+          y: {
+              beginAtZero: true,
+              ticks: {
+                  stepSize: 1
+              }
           }
-      } else {
-          nonNumericalRatings[rating] = { count: 1, questions: [question] };
+      },
+      plugins: {
+          tooltip: {
+              callbacks: {
+                  afterLabel: function(context) {
+                      return numericalQuestions[context.dataIndex];
+                  }
+              }
+          }
       }
   }
 });
-console.log(numericalRatings, nonNumericalRatings, 'ratings to check')
-return { numericalRatings, nonNumericalRatings };
-}
 
-function createCharts(numericalRatings, nonNumericalRatings) {
-  // Prepare data for numerical ratings scatter plot
-  const numericalData = Object.keys(numericalRatings).map((rating) => {
-      const { count, questions } = numericalRatings[rating];
-      return {
-          value: [parseInt(rating), count],
-          questions: questions.join('\n'),
-      };
-  });
-
-  // Prepare data for non-numerical ratings scatter plot
-  const nonNumericalData = Object.keys(nonNumericalRatings).map((rating) => {
-      const { count, questions } = nonNumericalRatings[rating];
-      return {
-          value: [rating, count],
-          questions: questions.join('\n'),
-      };
-  });
-
-  // Destroy existing chart instances if they exist
-  if (numericalChartInstance) {
-      numericalChartInstance.dispose();
-  }
-  if (nonNumericalChartInstance) {
-      nonNumericalChartInstance.dispose();
-  }
-
-  // Create numerical ratings scatter plot
-  numericalChartInstance = echarts.init(document.getElementById('numericalRatingChart'));
-  numericalChartInstance.setOption({
-      title: {
-          text: 'Числовые оценки',
-      },
-      tooltip: {
-          formatter: function (params) {
-              return `${params.value[0]}: ${params.data.questions}`;
-          },
-      },
-      xAxis: {
-          type: 'value',
-          name: 'Оценка',
-      },
-      yAxis: {
-          type: 'value',
-          name: 'Количество',
-      },
-      visualMap: {
-          min: 0,
-          max: Math.max(...numericalData.map(d => d.value[1])),
-          dimension: 1,
-          inRange: {
-              color: ['#50a3ba', '#eac736', '#d94e5d'],
-          },
-      },
-      series: [{
-          type: 'scatter',
-          data: numericalData,
-          symbolSize: function (data) {
-              return data[1] * 10;
-          },
-          emphasis: {
-              label: {
-                  show: true,
-                  formatter: function (param) {
-                      return `${param.value[0]}: ${param.data.questions}`;
-                  },
-                  position: 'top',
-              },
-          },
+// Non-Numerical Rating Chart
+const nonNumericalCtx = document.getElementById('nonNumericalRatingChart').getContext('2d');
+const nonNumericalRatingChart = new Chart(nonNumericalCtx, {
+  type: 'bar',
+  data: {
+      labels: nonNumericalLabels,
+      datasets: [{
+          label: 'Общее количество оценок (Non-Numerical)',
+          data: nonNumericalValues,
+          backgroundColor: 'rgba(255, 159, 64, 0.2)',
+          borderColor: 'rgba(255, 159, 64, 1)',
+          borderWidth: 1,
+          maxBarThickness: 250
       }],
-  });
+  },
+  options: {
+      scales: {
+          y: {
+              beginAtZero: true,
+              ticks: {
+                  stepSize: 1
+              }
+          },
+      },
+      plugins: {
+          tooltip: {
+              callbacks: {
+                  afterLabel: function(context) {
+                      return nonNumericalQuestions[context.dataIndex];
+                  }
+              }
+          }
+      }
+  }
+});
 
-  // Create non-numerical ratings scatter plot
-  nonNumericalChartInstance = echarts.init(document.getElementById('nonNumericalRatingChart'));
-  nonNumericalChartInstance.setOption({
-      title: {
-          text: 'Нечисловые оценки',
-      },
-      tooltip: {
-          formatter: function (params) {
-              return `${params.value[0]}: ${params.data.questions}`;
-          },
-      },
-      xAxis: {
-          type: 'category',
-          name: 'Оценка',
-      },
-      yAxis: {
-          type: 'value',
-          name: 'Количество',
-      },
-      visualMap: {
-          min: 0,
-          max: Math.max(...nonNumericalData.map(d => d.value[1])),
-          dimension: 1,
-          inRange: {
-              color: ['#50a3ba', '#eac736', '#d94e5d'],
-          },
-      },
-      series: [{
-          type: 'scatter',
-          data: nonNumericalData,
-          symbolSize: function (data) {
-              return data[1] * 10;
-          },
-          emphasis: {
-              label: {
-                  show: true,
-                  formatter: function (param) {
-                      return `${param.value[0]}: ${param.data.questions}`;
-                  },
-                  position: 'top',
-              },
-          },
-      }],
-  });
-}

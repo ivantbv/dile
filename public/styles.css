@@ -1,0 +1,168 @@
+#showpage1 {
+    font-size: large;
+}
+
+:host {
+    --dile-tab-background-color: rgb(0, 255, 17);
+  }
+  
+  /* Apply the variable to a specific element */
+  article .selected {
+    background-color: green;
+  }
+
+  .tooltip_tooltip-icon__2w4kL {
+    width: 23px;
+  }
+ 
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  .side-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 60px;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: width 0.3s;
+    z-index: 1;
+  }
+  
+  .side-panel.expanded {
+    width: 200px;
+  }
+  
+  .side-panel .toggle-btn {
+    background-color: #111;
+    color: white;
+    border: none;
+    font-size: 30px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .nav-menu {
+    margin: 20px 0;
+    padding: 0;
+  }
+  
+  .nav-menu a {
+    padding: 8px 8px 8px 16px;
+    text-decoration: none;
+    font-size: 20px;
+    color: white;
+    display: block;
+    transition: 0.3s;
+  }
+  
+  .nav-menu a:hover {
+    background-color: #575757;
+  }
+  
+  .main-content {
+    margin-left: 60px;
+    padding: 16px;
+    transition: margin-left 0.3s;
+  }
+  
+  .side-panel.expanded + .main-content {
+    margin-left: 200px;
+  }
+
+  .shoutbox {
+    width: 300px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 20px auto;
+}
+#comments {
+    border-bottom: 1px solid #eee;
+    padding: 5px 0;
+}
+
+
+
+.shoutbox {
+  width: 300px;
+  margin: 0 auto;
+  border-radius: 10px;
+
+  width: 100%;
+  max-width: 867px;
+}
+.scrollable {
+  max-height: 400px;
+  overflow-y: scroll;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+.message {
+  margin-bottom: 10px;
+  padding: 5px;
+  border-bottom: 1px solid #eee;
+}
+.message.pinned {
+  background-color: #fff179;
+}
+.delete, .pin {
+  margin-left: 10px;
+  cursor: pointer;
+  color: red;
+  border: none;
+  background: none;
+  font-size: 0.9em;
+}
+
+
+.shoutbox {
+  margin: 0 auto;
+  height: 350px;
+}
+
+.shoutbox-inner {
+  border-radius: 10px;
+  width: 444px;
+}
+
+.shoutbox-headline {
+  height: 42px;
+  text-transform: uppercase;
+  background-image: linear-gradient(87.64deg, rgba(12, 77, 34, .97) 18.18%, rgba(44, 128, 11, .97) 113.68%);
+  padding: 8px 18px;
+  font-size: .895em;
+  border-radius: 6px 6px 0 0;
+}
+.scrollable {
+  max-height: 408px;
+  overflow-y: scroll;
+  border: 1px solid #ccc;
+  padding: 10px;
+  height: 320px;
+}
+.message {
+  margin-bottom: 10px;
+  border-bottom: 1px solid #4e4e4e;
+  width: auto;
+  min-width: 100px;
+  transform: translateY(15px);
+  -webkit-animation-name: appereMessage;
+  animation-name: appereMessage;
+  -webkit-animation-duration: .5s;
+  animation-duration: .5s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  padding: 10px;
+  background-color: #fefefe;
+  border-radius: 0 10px 10px;
+  display: flex;
+  align-items: center;
+}
+
+.shoutbox-form {
+  display: flex;
+}

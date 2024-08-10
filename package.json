@@ -15,8 +15,10 @@
     "chart.js": "^4.4.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "node-fs": "^0.1.7",
     "path": "^0.12.7",
-    "pg": "^8.12.0"
+    "pg": "^8.12.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
