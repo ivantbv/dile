@@ -47,19 +47,33 @@ import './shoutbox.js';
         <div class="shoutbox">
             <div class="shoutbox-inner">
                 <div class="shoutbox-headline"></div>
+
+                <!-- Pinned Messages Header -->
+                <div class="pinned-messages-header" style="display: none;">
+                    <span class="pinned-summary"></span>
+                    <button class="view-pinned">View Pinned</button>
+                    <button class="back-to-chat" style="display: none;">Back</button>
+                </div>
+                
                 <div class="shoutbox-messages-container">
                     <div id="comments" class="scrollable"></div>
                 </div>
+
                 <div class="shoutbox-container-form">
                     <form id="shoutbox-form">
-                    <input type="text" id="username" placeholder="Пользователь" required readonly>
-                    <input type="text" id="comment" placeholder="Ваше сообщение" required>
-                    <button type="submit">Post</button>
+                        <input type="text" id="username" placeholder="Пользователь" required readonly>
+                        <textarea rows="5" cols="36" id="comment" placeholder="Ваше сообщение" required>
+                        </textarea>
+                        <button type="submit">Отправить</button>
                     </form>
                 </div>
             </div>
         </div>
         `
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
         const shoutForm = document.getElementById('shoutbox-form');
         const messagesDiv = document.getElementById('comments');
         const usernameInput = document.getElementById('username');
@@ -108,13 +122,15 @@ import './shoutbox.js';
         }
         startWebSocket(wsUrl); // Initialize WebSocket connection
 
-        async function fetchMessages() {
+        async function fetchMessages(initialLoad = false) {
             try {
                 const response = await fetch(endpointShoutBoxComment);
                 if (!response.ok) throw new Error('Network response was not ok');
                 const messages = await response.json();
                 messagesDiv.innerHTML = '';
                 let allMessagesHTML = '';
+                //const sortedMessages = messages.sort((a, b) => b.created_at - a.created_at);
+
                 messages.forEach(message => {
                     const messageDiv = document.createElement('div');
                     // messageDiv.classList.add('message');
@@ -171,6 +187,10 @@ import './shoutbox.js';
                     allMessagesHTML += messageHTML;
                 });
                 messagesDiv.innerHTML = allMessagesHTML;
+                if (initialLoad) {
+                    scrollToBottom();
+                }
+                
                 // Attach event listeners to delete and pin buttons
                 document.querySelectorAll('.delete').forEach(button => {
                     button.addEventListener('click', async function () {
@@ -241,7 +261,8 @@ import './shoutbox.js';
                 if (response.ok) {
                     const newMessage = await response.json();
                     ws.send(JSON.stringify(newMessage));
-                    fetchMessages();
+                    fetchMessages(true);
+                    //scrollToBottom();
                     //shoutForm.reset();
                     document.getElementById('comment').value = '';
                 } else {
@@ -251,7 +272,7 @@ import './shoutbox.js';
                 console.error('Error posting message:', error);
             }
         });
-        fetchMessages()
+        fetchMessages(true);
         let ws = startWebSocket(wsUrl);
     }
     window.initializeShoutbox = initializeShoutbox;

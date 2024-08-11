@@ -77,7 +77,8 @@
 #comments {
     border-bottom: 1px solid #eee;
     display: flex;
-    flex-direction: column-reverse;
+    /* flex-direction: column-reverse; */
+    flex-direction: column;
 }
 
 .shoutbox {
@@ -93,6 +94,26 @@
   overflow-y: scroll;
   border: 1px solid #ccc;
   padding: 5px 15px 20px 15px;
+}
+
+.pinned-messages-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+/* Pinned summary text */
+.pinned-summary {
+  font-weight: bold;
+  color: #333;
+}
+
+.shoutbox .back-to-chat {
+  display: none;
 }
 
 .message.pinned {
@@ -141,10 +162,10 @@
   width: auto;
   min-width: 100px;
   transform: translateY(6px);
-  -webkit-animation-duration: .5s;
+  /* -webkit-animation-duration: .5s;
   animation-duration: .5s;
   animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
+  animation-fill-mode: forwards; */
   background-color: #fefefe;
   border-radius: 0 10px 10px;
   display: flex;
@@ -152,7 +173,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 11px;
   flex-direction: column;
-  max-width: 60%;
+  max-width: 63%;
 }
 
 .message.user-message {
@@ -170,6 +191,11 @@
   display: flex;
   flex-direction: column;
   margin: 2px;
+
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .message-username {
@@ -184,6 +210,63 @@
   margin-top: 10px;
 }
 
-.shoutbox-form {
+#shoutbox-form {
   display: flex;
+}
+
+.shoutbox-container-form {
+  padding-right: 0;
+  width: 100%;
+  border-top: 1px solid #a8a6a6;
+  /* flex: 0 0 auto; */
+  position: relative;
+  flex-direction: column;
+  display: flex;
+}
+
+#shoutbox-form {
+  /* height: auto; */
+  min-height: 116px;
+  overflow-y: auto;
+  max-height: 180px;
+  width: 100%;
+}
+
+.shoutbox #username {
+  position: absolute;
+  right: 12px;
+  background: none;
+  text-align: right;
+  appearance: none;
+  border-left: none;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+  color: #5b5b5b;
+}
+
+.shoutbox #comment {
+  max-width: 444px;
+  height: 80px;
+  border-top: medium;
+  outline: none;
+  resize: none;
+  border-radius: 0 0 10px 10px;
+  font-family: Arial, sans-serif;
+  padding-top: 23px;
+  /* padding-right: 86px; */
+  padding-right: 80px;
+  padding-left: 8px;
+  padding-bottom: 10px;
+  line-height: 21px;
+}
+
+.shoutbox .shoutbox-container-form button {
+  position: absolute;
+  right: 10px;
+  top: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-end;
 }
