@@ -114,50 +114,63 @@ import './shoutbox.js';
                 if (!response.ok) throw new Error('Network response was not ok');
                 const messages = await response.json();
                 messagesDiv.innerHTML = '';
+                let allMessagesHTML = '';
                 messages.forEach(message => {
                     const messageDiv = document.createElement('div');
-                //     messageDiv.innerHTML = `
-                //     <div class="message">
-                //         <div class="message-content">
-                //             <strong class="message-username">${message.username}: </strong>
-                //             <span>${message.comment}</span>
-                //             <small>${new Date(message.created_at).toLocaleString()}</small>
-                //         </div>
-                //     </div>
-                // `
-                    messageDiv.classList.add('message');
-                    const user = document.createElement('strong');
-                    user.textContent = message.username;
-                    messageDiv.appendChild(user);
+                    // messageDiv.classList.add('message');
+                    // const user = document.createElement('strong');
+                    // user.textContent = message.username;
+                    // messageDiv.appendChild(user);
                     
-                    const text = document.createTextNode(`: ${message.comment}`);
-                    messageDiv.appendChild(text);
-                    const time = document.createElement('small');
-                    time.textContent = new Date(message.created_at).toLocaleString();
-                    messageDiv.appendChild(time);
+                    // const text = document.createTextNode(`: ${message.comment}`);
+                    // messageDiv.appendChild(text);
+                    // const time = document.createElement('small');
+                    // time.textContent = new Date(message.created_at).toLocaleString();
+                    // messageDiv.appendChild(time);
         
-                    if (isAdmin || message.username === usernameInput.value) {
-                        const deleteButton = document.createElement('button');
-                        deleteButton.textContent = 'Delete';
-                        deleteButton.classList.add('delete');
-                        deleteButton.setAttribute('data-id', message.id);
-                        messageDiv.appendChild(deleteButton);
+                    // if (isAdmin || message.username === usernameInput.value) {
+                    //     const deleteButton = document.createElement('button');
+                    //     deleteButton.textContent = 'Delete';
+                    //     deleteButton.classList.add('delete');
+                    //     deleteButton.setAttribute('data-id', message.id);
+                    //     messageDiv.appendChild(deleteButton);
         
-                        if (isAdmin) {
-                            const pinButton = document.createElement('button');
-                            pinButton.textContent = message.is_pinned ? 'Unpin' : 'Pin';
-                            pinButton.classList.add('pin');
-                            pinButton.setAttribute('data-id', message.id);
-                            messageDiv.appendChild(pinButton);
-                        }
-                    }
+                    //     if (isAdmin) {
+                    //         const pinButton = document.createElement('button');
+                    //         pinButton.textContent = message.is_pinned ? 'Unpin' : 'Pin';
+                    //         pinButton.classList.add('pin');
+                    //         pinButton.setAttribute('data-id', message.id);
+                    //         messageDiv.appendChild(pinButton);
+                    //     }
+                    // }
 
-                    if (message.is_pinned) {
-                        messageDiv.classList.add('pinned');
-                    }
-                    messagesDiv.appendChild(messageDiv);
+                    // if (message.is_pinned) {
+                    //     messageDiv.classList.add('pinned');
+                    // }
+                    // messagesDiv.appendChild(messageDiv);
+
+                    const isUserMessage = message.username === usernameInput.value;
+                    const pinButtonText = message.is_pinned ? 'Unpin' : 'Pin';
+
+                    // Construct the HTML for this message
+                    const messageHTML = `
+                    <div class="message ${message.is_pinned ? 'pinned' : ''} ${isUserMessage ? 'user-message' : ''}">
+                        <div class="message-content">
+                            <strong class="message-username">${message.username}</strong>
+                            <span class="message-comment">${message.comment}</span> <br>
+                            <small class="message-date">${new Date(message.created_at).toLocaleString()}</small>
+                            ${isAdmin || isUserMessage ? `
+                                <button class="delete" data-id="${message.id}">Удалить</button>
+                                ${isAdmin ? `<button class="pin" data-id="${message.id}">${pinButtonText}</button>` : ''}
+                            ` : ''}
+                        </div>
+                    </div>
+                    `;
+
+                    // Add the HTML of this message to the accumulating string
+                    allMessagesHTML += messageHTML;
                 });
-
+                messagesDiv.innerHTML = allMessagesHTML;
                 // Attach event listeners to delete and pin buttons
                 document.querySelectorAll('.delete').forEach(button => {
                     button.addEventListener('click', async function () {
