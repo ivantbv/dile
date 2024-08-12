@@ -112,7 +112,7 @@ app.get('/shoutbox/comments', async (req, res) => {
   const host = req.headers.origin; // Assuming the host is sent in the headers
   try {
     const result = await client.query(
-      'SELECT * FROM shoutbox WHERE host = $1 ORDER BY is_pinned DESC, created_at DESC', [host]
+      'SELECT * FROM shoutbox WHERE host = $1 ORDER BY created_at ASC', [host] //ORDER BY is_pinned DESC, created_at DESC
     );
     res.json(result.rows);
   } catch (error) {

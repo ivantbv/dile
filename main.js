@@ -46,23 +46,67 @@ import './shoutbox.js';
         shoutboxContainer.innerHTML = `
         <div class="shoutbox">
             <div class="shoutbox-inner">
-                <div class="shoutbox-headline"></div>
+                <div class="shoutbox-headline">
+                <h2></h2>
+                </div>
+
+                <!-- Pinned Messages Header -->
+                <div class="pinned-messages-header" style="display: none;">
+                    <span class="pinned-summary"></span>
+                    <button class="view-pinned">View Pinned</button>
+                    <button class="back-to-chat" style="display: none;">Back</button>
+                </div>
+                
                 <div class="shoutbox-messages-container">
                     <div id="comments" class="scrollable"></div>
                 </div>
+
                 <div class="shoutbox-container-form">
                     <form id="shoutbox-form">
-                    <input type="text" id="username" placeholder="Пользователь" required readonly>
-                    <input type="text" id="comment" placeholder="Ваше сообщение" required>
-                    <button type="submit">Post</button>
+                        <input type="text" id="username" placeholder="Пользователь" required readonly>
+                        <textarea rows="5" cols="36" id="comment" placeholder="Ваше сообщение" required></textarea>
+                        <button type="submit" class="shoutbox-submit-btn" disabled="">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M7.89221 0.914114L7.24838 1.55794C7.096 1.71032 7.096 1.9574 7.24838 
+                                2.10981L12.2929 7.15433H1.19018C0.974678 7.15433 0.799957 7.32905 0.799957 
+                                7.54455V8.45506C0.799957 8.67055 0.974678 8.84527 1.19018 
+                                8.84527H12.2929L7.24838 13.8898C7.096 14.0422 7.096 14.2893 7.24838 
+                                14.4417L7.89221 15.0855C8.04459 15.2379 8.29167 15.2379 8.44408 
+                                15.0855L15.2538 8.27575C15.4062 8.12337 15.4062 7.8763 15.2538 
+                                7.72388L8.44405 0.914114C8.29167 0.761701 8.04459 0.761701 7.89221 
+                                0.914114Z" fill="white">
+                                </path>
+                            </svg>
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
         `
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
         const shoutForm = document.getElementById('shoutbox-form');
         const messagesDiv = document.getElementById('comments');
         const usernameInput = document.getElementById('username');
+        const submitButton = document.querySelector('.shoutbox-submit-btn');
+        const shoutboxTextarea = document.querySelector('.shoutbox #comment')
+
+        shoutboxTextarea.addEventListener('input', (e) => {
+            submitButton.disabled = !e.target.value.trim();
+        });
+
+        shoutboxTextarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Prevents the default action (i.e., adding a new line)
+                //shoutForm.dispatchEvent(new Event('submit', { cancelable: true }));
+                if (!submitButton.disabled) {
+                    shoutForm.requestSubmit();  // Submit the form if the button is enabled
+                }
+            }
+        });
+
         //const email = config.email;
         usernameInput.value = email;
         const isLocalhost = window.location.hostname === 'localhost';
@@ -108,13 +152,15 @@ import './shoutbox.js';
         }
         startWebSocket(wsUrl); // Initialize WebSocket connection
 
-        async function fetchMessages() {
+        async function fetchMessages(initialLoad = false) {
             try {
                 const response = await fetch(endpointShoutBoxComment);
                 if (!response.ok) throw new Error('Network response was not ok');
                 const messages = await response.json();
                 messagesDiv.innerHTML = '';
                 let allMessagesHTML = '';
+                //const sortedMessages = messages.sort((a, b) => b.created_at - a.created_at);
+
                 messages.forEach(message => {
                     const messageDiv = document.createElement('div');
                     // messageDiv.classList.add('message');
@@ -171,6 +217,10 @@ import './shoutbox.js';
                     allMessagesHTML += messageHTML;
                 });
                 messagesDiv.innerHTML = allMessagesHTML;
+                if (initialLoad) {
+                    scrollToBottom();
+                }
+                
                 // Attach event listeners to delete and pin buttons
                 document.querySelectorAll('.delete').forEach(button => {
                     button.addEventListener('click', async function () {
@@ -241,9 +291,11 @@ import './shoutbox.js';
                 if (response.ok) {
                     const newMessage = await response.json();
                     ws.send(JSON.stringify(newMessage));
-                    fetchMessages();
+                    fetchMessages(true);
+                    //scrollToBottom();
                     //shoutForm.reset();
                     document.getElementById('comment').value = '';
+                    submitButton.disabled = true;
                 } else {
                     console.error('Failed to post message:', response.statusText);
                 }
@@ -251,7 +303,7 @@ import './shoutbox.js';
                 console.error('Error posting message:', error);
             }
         });
-        fetchMessages()
+        fetchMessages(true);
         let ws = startWebSocket(wsUrl);
     }
     window.initializeShoutbox = initializeShoutbox;
