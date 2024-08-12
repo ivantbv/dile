@@ -79,6 +79,7 @@
     display: flex;
     /* flex-direction: column-reverse; */
     flex-direction: column;
+    border: 0;
 }
 
 .shoutbox {
@@ -133,16 +134,33 @@
 .shoutbox-inner {
   border-radius: 10px;
   width: 444px;
+  box-shadow: 0 2px 20px 0 rgba(9, 58, 12, 0.15);
 }
 
 .shoutbox-headline {
-  height: 42px;
+  height: 43px;
   text-transform: uppercase;
   background-image: linear-gradient(87.64deg, rgba(12, 77, 34, .97) 18.18%, rgba(44, 128, 11, .97) 113.68%);
   padding: 8px 18px;
   font-size: .895em;
-  border-radius: 6px 6px 0 0;
+  border-radius: 14px 14px 0 0;
 }
+
+.shoutbox-headline h2 {
+  margin-top: 9px;
+}
+
+.shoutbox-headline h2::before {
+  content: "";
+  width: 39px;
+  height: 39px;
+  background-image: url("data:image/svg+xml,%3Csvg width='150' height='100' viewBox='0 0 150 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M94.0074 98.9849L82.9513 80.6579L72.1239 98.9849H59.1616L75.8144 71.3803L58.8413 45.7529H72.3832L83.2563 62.8632L93.6261 45.7529H106.588L89.8899 72.2168L107.046 98.9849H94.0074Z' fill='white'/%3E%3Cpath d='M149.181 80.8899C149.181 92.6009 140.336 99.9013 128.746 99.9013C118.529 99.9013 109.928 94.2739 109.089 82.0306H120.145C120.908 87.3538 125.178 89.6352 129.829 89.6352C135.624 89.6352 138.125 85.7568 138.125 80.7378C138.125 75.4907 134.236 72.2207 128.823 72.2207C124.324 72.2207 121.35 74.35 119.978 76.6314H109.41L113.062 45.7568H147.82L146.661 56.099H121.796L120.809 66.3158C120.809 66.3158 123.42 63.2473 131.335 63.2473C140.87 63.2473 149.181 69.6314 149.181 80.8899Z' fill='white'/%3E%3Cpath d='M110.397 39.1254C104.507 16.2281 85.822 0.140625 47.0456 0.140625H0.22876L6.58411 42.9999C11.3649 81.6729 26.1953 94.114 52.4402 98.6957C52.5622 98.7148 53.3933 98.8326 53.4048 97.863C53.4086 97.5132 53.1875 97.2128 52.8825 97.0836C35.1432 89.6349 33.1187 65.2053 29.3292 40.692L26.3974 21.1558H53.1227C77.7625 21.1558 96.7866 20.768 108.83 39.7376C109.009 40.0037 109.288 40.2015 109.619 40.2015C110.084 40.2015 110.431 39.825 110.431 39.3612C110.431 39.2775 110.42 39.1977 110.397 39.1254Z' fill='white'/%3E%3C/svg%3E%0A");
+  background-repeat: no-repeat;
+  background-size: contain;
+  margin-right: 10px;
+  display: block;
+}
+
 .scrollable {
   max-height: 408px;
   overflow-y: scroll;
@@ -230,6 +248,7 @@
   overflow-y: auto;
   max-height: 180px;
   width: 100%;
+  border: 0;
 }
 
 .shoutbox #username {
@@ -259,14 +278,40 @@
   padding-left: 8px;
   padding-bottom: 10px;
   line-height: 21px;
+  border-left: none;
+  border-right: none;
 }
 
 .shoutbox .shoutbox-container-form button {
   position: absolute;
-  right: 10px;
+  right: 19px;
   top: 28px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-end;
+
+  margin-bottom: .25rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  flex: initial;
+  transition: .3s;
+  will-change: backgorund-color;
+  outline: none;
+  border: none;
+}
+
+.shoutbox .shoutbox-container-form button:disabled {
+  background-color: rgba(109, 109, 109, 0.3);
+}
+
+.shoutbox .shoutbox-container-form button:enabled {
+  background-color: #004516;
 }
