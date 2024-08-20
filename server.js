@@ -7,6 +7,7 @@ import { resolve, dirname } from 'path';
 import pkg from 'pg';
 const { Client } = pkg;
 import { WebSocketServer } from 'ws';
+import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -89,17 +90,7 @@ const client = new Client({
     port: 5432,
   });
   client.connect();
-  
-  // Endpoint to get all comments
-// app.get('/shoutbox/comments', async (req, res) => {
-//   try {
-//     const result = await client.query('SELECT * FROM shoutbox ORDER BY created_at DESC');
-//     res.json(result.rows);
-//   } catch (error) {
-//     console.error('Error fetching comments:', error);
-//     res.status(500).send('Error fetching comments');
-//   }
-// });
+
 
 app.get('/api/chat-admins', (req, res) => {
   const host = req.headers.origin; //Get the host from the request headers
@@ -120,6 +111,36 @@ app.get('/shoutbox/comments', async (req, res) => {
     res.status(500).send('Error fetching comments');
   }
 });
+
+app.get('/adminbox/comments', async (req, res) => {
+  const host = req.headers.origin; 
+  const email = req.query.userEmail || ''; 
+  const chatId = req.query.chatId || ''; // Optional chat ID to filter messages
+
+  try {
+    let query = 'SELECT * FROM shoutbox WHERE host = $1';
+    const queryParams = [host];
+
+    if (email) {
+      query += ' AND username = $2';
+      queryParams.push(email);
+    }
+
+    if (chatId) {
+      query += ' AND chat_id = $3';
+      queryParams.push(chatId);
+    }
+    
+    query += ' ORDER BY created_at ASC';
+
+    const result = await client.query(query, queryParams);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).send('Error fetching comments');
+  }
+});
+
 
 // Endpoint to add a new comment
 // app.post('/shoutbox/comments', async (req, res) => {
@@ -195,14 +216,11 @@ app.post('/shoutbox/pin/:id', authorizeUserForComment, async (req, res) => {
   if (!req.isAdmin) {
     return res.status(403).send('Forbidden: Only admins can pin or unpin messages');
   }
+  
   const { id } = req.params;
-  const { unpin } = req.body;  // Check if the request is to unpin
+  const { unpin } = req.body;
   const is_pinned = !unpin;
-  //const _isAdmin = isAdmin(email, host);
-  //   if (!_isAdmin) {
-  //   return res.status(403).send('Forbidden: Only admins can pin or unpin messages');
-  // }
-  console.log(is_pinned, 'is pinned? ');
+
   try {
     await client.query('UPDATE shoutbox SET is_pinned = $1 WHERE id = $2', [is_pinned, id]);
     res.status(200).send();
@@ -212,34 +230,121 @@ app.post('/shoutbox/pin/:id', authorizeUserForComment, async (req, res) => {
   }
 });
 
+
+
+
+
+app.post('/adminbox/comments', async (req, res) => {
+  const { comment, email, userEmail, chatId } = req.body;
+  const host = req.headers.origin;
+  console.log(comment, 'comment in server', email, 'email in server?')
+  if (!comment || !email) {
+    return res.status(400).send('Email and comment are required');
+  }
+
+  const _isAdmin = isAdmin(email, host);
+  const username = _isAdmin && userEmail ? userEmail : email;
+  const _chatId = chatId || uuidv4(); // Generate a new chat ID if none is provided
+
+  try {
+    const result = await client.query(
+      'INSERT INTO shoutbox (username, comment, is_admin, host, chat_id, admin_email) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [username, comment, _isAdmin, host, _chatId, _isAdmin ? email : null]
+    );
+
+    const newComment = result.rows[0];
+    wss.clients.forEach(client => {
+      if (client.readyState === client.OPEN) {
+        client.send(JSON.stringify(newComment));
+      }
+    });
+    res.status(201).json(newComment);
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).send('Error adding comment');
+  }
+});
+
+app.post('/adminbox/get-chat-id', async (req, res) => {
+  const { adminEmail, userEmail } = req.body;
+  const host = req.headers.origin;
+
+  if (!adminEmail || !userEmail) {
+      return res.status(400).send('Both adminEmail and userEmail are required.');
+  }
+
+  try {
+      // Check if a chatId already exists for this conversation
+      const result = await client.query(
+          'SELECT chat_id FROM shoutbox WHERE admin_email = $1 AND username = $2 AND host = $3 LIMIT 1',
+          [adminEmail, userEmail, host]
+      );
+
+      let chatId;
+      if (result.rows.length > 0) {
+          // Chat ID found, return it
+          chatId = result.rows[0].chat_id;
+      } else {
+          // No chat ID found, generate a new one
+          chatId = uuidv4();
+          // Insert an initial record to establish the chat with the new chatId
+          await client.query(
+              'INSERT INTO shoutbox (username, comment, is_admin, host, chat_id, admin_email) VALUES ($1, $2, $3, $4, $5, $6)',
+              [userEmail, 'Initial message', true, host, chatId, adminEmail]
+          );
+      }
+
+      // Return the chatId
+      res.status(200).json({ chatId });
+
+  } catch (error) {
+      console.error('Error retrieving or creating chatId:', error);
+      res.status(500).send('Server error while retrieving or creating chatId');
+  }
+});
+
+
 // WebSocket server setup
 const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-// const wss = new WebSocketServer({ server });
-
-// wss.on('connection', (ws) => {
-//   console.log('New client connected');
-//   ws.on('close', () => {
-//     console.log('Client disconnected');
-//   });
-// });
-
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
   ws.on('message', (message) => {
-    // const parsedMessage = JSON.parse(message);
-    // if (parsedMessage.type === 'ping') {
-    //   ws.send(JSON.stringify({ type: 'pong' }));
-    // } else 
     if (message === 'ping') {
       ws.send('pong');
+    } else {
+      //const parsedMessage = JSON.parse(message);
+      const { comment, email, host } = message;
+
+      // Broadcast message to all clients (adjust logic if necessary)
+      wss.clients.forEach(client => {
+        if (client.readyState === client.OPEN) {
+          client.send(JSON.stringify({ email, comment, host }));
+        }
+      });
     }
   });
 
   ws.on('close', () => {
-    //console.log('Client disconnected');
+    console.log('Client disconnected');
   });
 });
+
+// wss.on('connection', (ws) => {
+//   ws.on('message', (message) => {
+//     // const parsedMessage = JSON.parse(message);
+//     // if (parsedMessage.type === 'ping') {
+//     //   ws.send(JSON.stringify({ type: 'pong' }));
+//     // } else 
+//     if (message === 'ping') {
+//       ws.send('pong');
+//     }
+//   });
+
+//   ws.on('close', () => {
+//     //console.log('Client disconnected');
+//   });
+// });
