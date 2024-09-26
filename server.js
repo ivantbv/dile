@@ -116,7 +116,7 @@ app.get('/adminbox/comments', async (req, res) => {
   const host = req.headers.origin; 
   const email = req.query.userEmail || ''; 
   const chatId = req.query.chatId || ''; // Optional chat ID to filter messages
-
+  console.log(host, '<- host ', email, '<- email ', chatId, '<- chatid!')
   try {
     let query = 'SELECT * FROM shoutbox WHERE host = $1';
     const queryParams = [host];
@@ -237,13 +237,14 @@ app.post('/shoutbox/pin/:id', authorizeUserForComment, async (req, res) => {
 app.post('/adminbox/comments', async (req, res) => {
   const { comment, email, userEmail, chatId } = req.body;
   const host = req.headers.origin;
-  console.log(comment, 'comment in server', email, 'email in server?')
+  console.log(comment, 'comment in server', email, 'email in server?', chatId, 'chatid??')
   if (!comment || !email) {
     return res.status(400).send('Email and comment are required');
   }
 
   const _isAdmin = isAdmin(email, host);
-  const username = _isAdmin && userEmail ? userEmail : email;
+  //const username = _isAdmin && userEmail ? userEmail : email;
+  const username = userEmail; //_isAdmin ? email :
   const _chatId = chatId || uuidv4(); // Generate a new chat ID if none is provided
 
   try {
@@ -266,7 +267,7 @@ app.post('/adminbox/comments', async (req, res) => {
 });
 
 app.post('/adminbox/get-chat-id', async (req, res) => {
-  const { adminEmail, userEmail } = req.body;
+  const { adminEmail, userEmail, comment } = req.body;
   const host = req.headers.origin;
 
   if (!adminEmail || !userEmail) {
@@ -281,6 +282,7 @@ app.post('/adminbox/get-chat-id', async (req, res) => {
       );
 
       let chatId;
+      console.log(result, 'result from getchatid')
       if (result.rows.length > 0) {
           // Chat ID found, return it
           chatId = result.rows[0].chat_id;
@@ -290,7 +292,7 @@ app.post('/adminbox/get-chat-id', async (req, res) => {
           // Insert an initial record to establish the chat with the new chatId
           await client.query(
               'INSERT INTO shoutbox (username, comment, is_admin, host, chat_id, admin_email) VALUES ($1, $2, $3, $4, $5, $6)',
-              [userEmail, 'Initial message', true, host, chatId, adminEmail]
+              [userEmail, comment, true, host, chatId, adminEmail]
           );
       }
 

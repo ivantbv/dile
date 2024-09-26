@@ -17,6 +17,23 @@ import './shoutbox.js';
         }
     }
 
+    async function fetchAdmins() {
+        try {
+            const response = await fetch('http://127.0.0.1:4000/api/chat-admins');
+            if (!response.ok) throw new Error('Failed to fetch admins');
+            const { admins } = await response.json();
+            if (admins.length > 0) {
+                // Select an admin for the chat (e.g., pick the first one)
+                return admins[0];  // You can change this logic if needed
+            } else {
+                throw new Error('No admins available for this host');
+            }
+        } catch (error) {
+            console.error('Error fetching admins:', error);
+            return null;
+        }
+    }    
+
     async function initializeShoutbox(config) {
         function loadCSS(url) {
             const link = document.createElement('link');
@@ -307,13 +324,13 @@ import './shoutbox.js';
         shoutboxContainer.id = 'shoutbox-container';
         document.body.appendChild(shoutboxContainer);
         
-        async function getChatId(adminEmail, userEmail) {
-            const response = await fetch('/adminbox/get-chat-id', {
+        async function getChatId(adminEmail, userEmail, comment) { //to solve chatid problem with generating new id each time!
+            const response = await fetch('http://127.0.0.1:4000/adminbox/get-chat-id', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ adminEmail, userEmail })
+                body: JSON.stringify({ adminEmail, userEmail, comment })
             });
         
             if (response.ok) {
@@ -410,48 +427,74 @@ import './shoutbox.js';
                     const response = await fetch(endpointShoutBoxComment);
                     if (!response.ok) throw new Error('Network response was not ok');
                     const messages = await response.json();
-    
+            
                     const userChats = {};
                     messages.forEach(message => {
-                        if (!userChats[message.username]) {
-                            userChats[message.username] = [];
+                        // Group by chatId or username
+                        const chatKey = message.username;
+            
+                        if (!userChats[chatKey]) {
+                            userChats[chatKey] = [];
                         }
-                        userChats[message.username].push(message);
+                        userChats[chatKey].push(message);
                     });
-    
+            
+                    console.log(userChats, 'user chatsssssss!!!!!!!!!');
+            
                     userChatsList.innerHTML = '';
                     for (const [username, messages] of Object.entries(userChats)) {
                         const listItem = document.createElement('li');
-                        listItem.textContent = `${username}: ${messages[0].comment.substring(0, 30)}`;
-                        listItem.addEventListener('click', () => loadChat(username, messages));
+                        listItem.setAttribute('data-chatId', username);
+                        
+                        // Determine who made the latest comment: admin or user
+                        const lastMessage = messages[messages.length - 1];
+                        const lastMessageSender = lastMessage.is_admin ? lastMessage.admin_email : lastMessage.username;
+                        
+                        listItem.textContent = `${lastMessageSender}: ${lastMessage.comment.substring(0, 30)}`;
+                        listItem.addEventListener('click', (e) => {
+                            console.log(username, 'username value');
+                            selectedUser = username;
+                            loadChat(username, messages);
+                        });
+            
                         userChatsList.appendChild(listItem);
                     }
-                    userChatsListContainer.style.display = 'block';
+            
+                    if (adminChatView.style.display === 'none') {
+                        userChatsListContainer.style.display = 'block';
+                    }
+            
                 } catch (error) {
                     console.error('Failed to fetch user chats:', error);
                 }
-            }
+            }     
             
             function loadChat(username, messages) {
                 selectedUser = username;  // Set the selected user for messaging
                 showAdminChatView();  // Display the admin chat view
                 adminMessagesDiv.innerHTML = '';
-                
+
                 messages.forEach(message => {
                     const messageDiv = document.createElement('div');
                     messageDiv.className = 'message';
+                    
+                    // Check if the message was posted by an admin
+                    const displayedUsername = message.is_admin ? message.admin_email : message.username;
                     messageDiv.innerHTML = `
                         <div class="message-content">
-                            <strong class="message-username">${message.username}</strong>
+                            <strong class="message-username">${displayedUsername}</strong>
                             <span class="message-comment">${message.comment}</span> <br>
                             <small class="message-date">${new Date(message.created_at).toLocaleString()}</small>
                         </div>
                     `;
                     adminMessagesDiv.appendChild(messageDiv);
+
+                    //appendMessage(message);
                 });
             
                 scrollToBottom();
             }
+            
             
     
             backToChatsButton.addEventListener('click', () => {
@@ -500,15 +543,16 @@ import './shoutbox.js';
             adminForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const comment = adminTextarea.value;
+                
                 const username = selectedUser;  // Use the selected user's username
-            
+                console.log('admin email before submitting:', email, 'and username -> ', username);
                 if (!username) {
                     console.error('No user selected for messaging.');
                     return;
                 }
 
-                const chatId = await getChatId(email, username);
-
+                const chatId = await getChatId(email, username, comment);
+                console.log(chatId, 'chat id when admin submits?')
                 if (!chatId) {
                     console.error('Failed to retrieve or create chat_id');
                     return;
@@ -521,7 +565,7 @@ import './shoutbox.js';
                             "Content-Type": 'application/json',
                             "email": email  // Sending the admin's email as the sender
                         },
-                        body: JSON.stringify({ comment, email: username, chatId: chatId })  // Use the existing chatId
+                        body: JSON.stringify({ comment, email: email, userEmail: selectedUser, chatId: chatId })  // Use the existing chatId
                     });
             
                     if (response.ok) {
@@ -649,9 +693,13 @@ import './shoutbox.js';
             function appendMessage(message) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
+                const sender = message.is_admin ? message.admin_email : message.username;
+                // const userUsernameInput = document.getElementById('user-username');
+                // const isUserMessage = message.username === userUsernameInput.value;
+
                 messageDiv.innerHTML = `
                     <div class="message-content">
-                        <strong class="message-username">${message.username}</strong>
+                        <strong class="message-username">${sender}</strong>
                         <span class="message-comment">${message.comment}</span> <br>
                         <small class="message-date">${new Date(message.created_at).toLocaleString()}</small>
                     </div>
@@ -677,40 +725,55 @@ import './shoutbox.js';
                 }
             }
     
-userForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    const comment = userTextarea.value;
-    const username = email;
-
-    // Prevent duplicate submissions
-    userForm.querySelector('button[type="submit"]').disabled = true;
-    const chatId = getChatId(adminEmail, username)
-    try {
-        const response = await fetch(endpointShoutBoxComment, {
-            method: 'POST',
-            headers: {
-                "Content-Type": 'application/json',
-                "email": email
-            },
-            body: JSON.stringify({ comment, email: username, chatId: chatId })
-        });
-
-        if (response.ok) {
-            const newMessage = await response.json();
-            ws.send(JSON.stringify(newMessage));
-            appendMessage(newMessage);  // Append message only once
-            userTextarea.value = '';
-            userSubmitButton.disabled = true;
-        } else {
-            console.error('Failed to post message:', response.statusText);
-        }
-    } catch (error) {
-        console.error('Error posting message:', error);
-    } finally {
-        userForm.querySelector('button[type="submit"]').disabled = false;
-    }
-});
-
+            userForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const comment = userTextarea.value;
+                const username = email;
+                console.log(username, 'username of the userform');
+                // Prevent duplicate submissions
+                userForm.querySelector('button[type="submit"]').disabled = true;
+            
+                let adminEmail = window.currentAdminEmail;  // Check if we already have the admin's email
+            
+                // If the admin is not set (new chat), fetch it
+                if (!adminEmail) {
+                    adminEmail = await fetchAdmins();
+                    if (!adminEmail) {
+                        console.error('No admin available to assign to the chat');
+                        userForm.querySelector('button[type="submit"]').disabled = false;
+                        return;  // Exit early if no admin is found
+                    }
+                    window.currentAdminEmail = adminEmail;  // Cache the admin email for future messages
+                }
+            
+                const chatId = await getChatId(adminEmail, username, comment);
+                
+                try {
+                    const response = await fetch(endpointShoutBoxComment, {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": 'application/json',
+                            "email": username
+                        },
+                        // body: JSON.stringify({ comment, email: email, userEmail: selectedUser, chatId: chatId })  // Use the existing chatId
+                        body: JSON.stringify({ comment, email: username, userEmail: username, chatId })  // Pass the adminEmail
+                    });
+                    if (response.ok) {
+                        const newMessage = await response.json();
+                        ws.send(JSON.stringify(newMessage));
+                        //appendMessage(newMessage);  // Append message only once
+                        userTextarea.value = '';
+                        userSubmitButton.disabled = true;
+                    } else {
+                        console.error('Failed to post message:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error posting message:', error);
+                } finally {
+                    userForm.querySelector('button[type="submit"]').disabled = false;
+                }
+            });
+            
     
             function scrollToBottom() {
                 userMessagesDiv.scrollTop = userMessagesDiv.scrollHeight;
