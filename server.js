@@ -267,7 +267,7 @@ app.post('/adminbox/comments', async (req, res) => {
 });
 
 app.post('/adminbox/get-chat-id', async (req, res) => {
-  const { adminEmail, userEmail, comment } = req.body;
+  const { adminEmail, userEmail } = req.body;
   const host = req.headers.origin;
 
   if (!adminEmail || !userEmail) {
@@ -277,9 +277,9 @@ app.post('/adminbox/get-chat-id', async (req, res) => {
   try {
       // Check if a chatId already exists for this conversation
       const result = await client.query(
-          'SELECT chat_id FROM shoutbox WHERE admin_email = $1 AND username = $2 AND host = $3 LIMIT 1',
-          [adminEmail, userEmail, host]
-      );
+        'SELECT chat_id FROM shoutbox WHERE (admin_email = $1 OR admin_email IS NULL) AND username = $2 AND host = $3 LIMIT 1',
+        [adminEmail, userEmail, host]
+      );  
 
       let chatId;
       console.log(result, 'result from getchatid')
@@ -290,10 +290,10 @@ app.post('/adminbox/get-chat-id', async (req, res) => {
           // No chat ID found, generate a new one
           chatId = uuidv4();
           // Insert an initial record to establish the chat with the new chatId
-          await client.query(
-              'INSERT INTO shoutbox (username, comment, is_admin, host, chat_id, admin_email) VALUES ($1, $2, $3, $4, $5, $6)',
-              [userEmail, comment, true, host, chatId, adminEmail]
-          );
+          // await client.query(
+          //     'INSERT INTO shoutbox (username, comment, is_admin, host, chat_id, admin_email) VALUES ($1, $2, $3, $4, $5, $6)',
+          //     [userEmail, comment, true, host, chatId, adminEmail]
+          // );
       }
 
       // Return the chatId

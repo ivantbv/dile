@@ -694,9 +694,14 @@ import './shoutbox.js';
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
                 const sender = message.is_admin ? message.admin_email : message.username;
-                // const userUsernameInput = document.getElementById('user-username');
-                // const isUserMessage = message.username === userUsernameInput.value;
-
+                const userUsernameInput = document.getElementById('user-username');
+                console.log(message.username, 'message username????????????')
+                const isUserMessage = message.username === userUsernameInput.value;
+                //const isUserMessage = message.username === email;
+                if (isUserMessage) {
+                    messageDiv.classList.add('user-message');  // Add class for user's messages
+                }
+                
                 messageDiv.innerHTML = `
                     <div class="message-content">
                         <strong class="message-username">${sender}</strong>
