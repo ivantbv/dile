@@ -24,7 +24,8 @@ const whitelist = [
   'http://localhost:8080/',
   'http://localhost',
   'http://127.0.0.1:4000',
-  'http://127.0.0.1:8080'
+  'http://127.0.0.1:8080',
+  'http://192.168.0.3:8080'
 ];
 const corsOptions = {
   origin: function (origin, callback) {
@@ -112,32 +113,78 @@ app.get('/shoutbox/comments', async (req, res) => {
   }
 });
 
+// app.get('/adminbox/comments', async (req, res) => {
+//   const host = req.headers.origin; 
+//   const email = req.query.userEmail || ''; 
+//   const chatId = req.query.chatId || ''; // Optional chat ID to filter messages
+//   console.log(host, '<- host ', email, '<- email ', chatId, '<- chatid!')
+//   try {
+//     let query = 'SELECT * FROM shoutbox WHERE host = $1';
+//     const queryParams = [host];
+
+//     if (email) {
+//       query += ' AND username = $2';
+//       queryParams.push(email);
+//     }
+
+//     if (chatId) {
+//       query += ' AND chat_id = $3';
+//       queryParams.push(chatId);
+//     }
+    
+//     query += ' ORDER BY created_at ASC';
+
+//     const result = await client.query(query, queryParams);
+//     res.json(result.rows);
+//   } catch (error) {
+//     console.error('Error fetching comments:', error);
+//     res.status(500).send('Error fetching comments');
+//   }
+// });
 app.get('/adminbox/comments', async (req, res) => {
-  const host = req.headers.origin; 
-  const email = req.query.userEmail || ''; 
-  const chatId = req.query.chatId || ''; // Optional chat ID to filter messages
-  console.log(host, '<- host ', email, '<- email ', chatId, '<- chatid!')
+  const host = req.headers.origin;
+  const email = req.query.userEmail || '';
+  const chatId = req.query.chatId || '';
+  const isAdmin = req.query.isAdmin === 'true'; // New parameter to identify admin
+  console.log(host, '<- host ', email, '<- email ', chatId, '<- chatid!');
+  
   try {
     let query = 'SELECT * FROM shoutbox WHERE host = $1';
     const queryParams = [host];
 
-    if (email) {
+    // If user request, filter by their email
+    if (email && !isAdmin) {
       query += ' AND username = $2';
       queryParams.push(email);
     }
 
+    // If admin request, allow filtering by chatId
     if (chatId) {
-      query += ' AND chat_id = $3';
+      query += isAdmin ? ' AND chat_id = $2' : ' AND chat_id = $3';
       queryParams.push(chatId);
     }
     
     query += ' ORDER BY created_at ASC';
-
     const result = await client.query(query, queryParams);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching comments:', error);
     res.status(500).send('Error fetching comments');
+  }
+});
+
+app.post('/adminbox/get-archived-chats', async (req, res) => {
+  // Extract host directly from request headers
+  const host = req.headers.origin;
+  try {
+      const result = await client.query(
+          'SELECT chat_id, username, comment, created_at, admin_email FROM shoutbox WHERE is_archived = true AND host = $1',
+          [host]  // Use the host obtained from the headers
+      );
+      res.status(200).json(result.rows);
+  } catch (error) {
+      console.error('Error fetching archived chats:', error);
+      res.status(500).json({ error: 'Failed to fetch archived chats' });
   }
 });
 
@@ -230,10 +277,6 @@ app.post('/shoutbox/pin/:id', authorizeUserForComment, async (req, res) => {
   }
 });
 
-
-
-
-
 app.post('/adminbox/comments', async (req, res) => {
   const { comment, email, userEmail, chatId } = req.body;
   const host = req.headers.origin;
@@ -254,17 +297,32 @@ app.post('/adminbox/comments', async (req, res) => {
     );
 
     const newComment = result.rows[0];
-    wss.clients.forEach(client => {
-      if (client.readyState === client.OPEN) {
-        client.send(JSON.stringify(newComment));
-      }
-    });
+    // wss.clients.forEach(client => {
+    //   if (client.readyState === client.OPEN) {
+    //     client.send(JSON.stringify(newComment));
+    //   }
+    // });
+    broadcastUpdate('new_message', newComment);
     res.status(201).json(newComment);
   } catch (error) {
     console.error('Error adding comment:', error);
     res.status(500).send('Error adding comment');
   }
 });
+
+/////
+app.post('/adminbox/archive-chat', async (req, res) => {
+  const { chatId } = req.body;
+  try {
+     await client.query('UPDATE shoutbox SET is_archived = true WHERE chat_id = $1', [chatId]);
+     broadcastUpdate('chat_archived' ,chatId);
+     res.status(200).json({ message: 'Chat archived successfully' });
+  } catch (error) {
+     console.error('Error archiving chat:', error);
+     res.status(500).json({ error: 'Failed to archive chat' });
+  }
+});
+///////
 
 app.post('/adminbox/get-chat-id', async (req, res) => {
   const { adminEmail, userEmail } = req.body;
@@ -313,14 +371,23 @@ const server = app.listen(port, () => {
 
 const wss = new WebSocketServer({ server });
 
+function broadcastUpdate(type, chatMessage) {
+  wss.clients.forEach(client => {
+    if (client.readyState === client.OPEN) {
+      client.send(JSON.stringify({ type: type, data: chatMessage }));
+    }
+  });
+}
+
 wss.on('connection', (ws) => {
   ws.on('message', (message) => {
     if (message === 'ping') {
       ws.send('pong');
     } else {
+      console.log('Message received from client:', message);
       //const parsedMessage = JSON.parse(message);
       const { comment, email, host } = message;
-
+      
       // Broadcast message to all clients (adjust logic if necessary)
       wss.clients.forEach(client => {
         if (client.readyState === client.OPEN) {
@@ -335,18 +402,36 @@ wss.on('connection', (ws) => {
   });
 });
 
+//USER THE LOWER FUNCTION AND REMOVE THE BROADCAST FUNCTION FROM THE OTHER ENDPOINTS (TO PREVENT DUPLICATION)
+
 // wss.on('connection', (ws) => {
 //   ws.on('message', (message) => {
-//     // const parsedMessage = JSON.parse(message);
-//     // if (parsedMessage.type === 'ping') {
-//     //   ws.send(JSON.stringify({ type: 'pong' }));
-//     // } else 
-//     if (message === 'ping') {
-//       ws.send('pong');
-//     }
-//   });
+//     const parsedMessage = JSON.parse(message);
 
-//   ws.on('close', () => {
-//     //console.log('Client disconnected');
+//     switch (parsedMessage.type) {
+//       case 'new_message':
+//         // Logic for handling new messages
+//         const newMessageData = parsedMessage.data;
+        
+//         // Broadcast this new message to all clients
+//         broadcastUpdate('new_message', newMessageData);
+//         break;
+
+//       case 'ping': 
+//         // If there's a ping message, send a pong back
+//         ws.send('pong');
+//         break;
+
+//       // Add other cases for different types of messages if needed
+//       case 'chat_archived':
+//         const chatId = parsedMessage.data.chatId;
+//         broadcastUpdate('chat_archived', chatId);
+//         break;
+
+//       // Add more message types as needed
+//       default:
+//         console.log('Unknown message type received:', parsedMessage.type);
+//         break;
+//     }
 //   });
 // });
