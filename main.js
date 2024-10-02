@@ -521,8 +521,12 @@ import './shoutbox.js';
                         listItem.setAttribute('data-chatId', username);
                         
                         // Determine who made the latest comment: admin or user
+
+                        //listItem.textContent = `${lastMessageSender}: ${lastMessage.comment.substring(0, 30)}`;
+
                         const lastMessage = messages[messages.length - 1];
                         const lastMessageSender = lastMessage.is_admin ? lastMessage.admin_email : lastMessage.username;
+
                         
                         listItem.textContent = `${lastMessageSender}: ${lastMessage.comment.substring(0, 30)}`;
                         listItem.addEventListener('click', async (e) => {
@@ -530,7 +534,7 @@ import './shoutbox.js';
                             selectedUser = username;
                             selectedChatId = await getChatId(email, username);
                             console.log(selectedChatId, 'CHAT ID FROM LIST ITEM CLICK');
-                            loadChat(username, messages);
+                            loadChat(username);
                         });
                          // Check if chat is archived or not
                         if (archivedChatIds.includes(messages[0].chat_id)) {
@@ -552,31 +556,39 @@ import './shoutbox.js';
                 }
             }     
             
-            function loadChat(username, messages) {
-                selectedUser = username;  // Set the selected user for messaging
-                showAdminChatView();  // Display the admin chat view
-                adminMessagesDiv.innerHTML = '';
-
-                messages.forEach(message => {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'message';
-                    
-                    // Check if the message was posted by an admin
-                    const displayedUsername = message.is_admin ? message.admin_email : message.username;
-                    messageDiv.innerHTML = `
-                        <div class="message-content">
-                            <strong class="message-username">${displayedUsername}</strong>
-                            <span class="message-comment">${message.comment}</span> <br>
-                            <small class="message-date">${new Date(message.created_at).toLocaleString()}</small>
-                        </div>
-                    `;
-                    adminMessagesDiv.appendChild(messageDiv);
-
-                    //appendMessage(message);
-                });
+            async function loadChat(username) {
+                selectedUser = username; // Set the selected user for messaging
+                showAdminChatView(); // Display the admin chat view
+                adminMessagesDiv.innerHTML = ''; // Clear previous messages
             
-                scrollToBottom();
+                try {
+                    // Fetch the latest messages for this chat from the server
+                    const response = await fetch(`${endpointShoutBoxComment}?userEmail=${encodeURIComponent(username)}`);
+                    if (!response.ok) throw new Error('Failed to fetch messages');
+                    const messages = await response.json();
+                    
+                    // Display the messages
+                    messages.forEach(message => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message';
+            
+                        const displayedUsername = message.is_admin ? message.admin_email : message.username;
+                        messageDiv.innerHTML = `
+                            <div class="message-content">
+                                <strong class="message-username">${displayedUsername}</strong>
+                                <span class="message-comment">${message.comment}</span> <br>
+                                <small class="message-date">${new Date(message.created_at).toLocaleString()}</small>
+                            </div>
+                        `;
+                        adminMessagesDiv.appendChild(messageDiv);
+                    });
+            
+                    scrollToBottom();
+                } catch (error) {
+                    console.error('Failed to load chat:', error);
+                }
             }
+            
             
             function disableChat() {
                 adminTextarea.disabled = true;
@@ -630,19 +642,41 @@ import './shoutbox.js';
                     const messageData = JSON.parse(event.data);
             
                     if (messageData.type === 'new_message') {
-                        console.log('New message received admin:', messageData.data);
-                        // Update the chat window immediately with the new message
-                        // You could fetch the new message or directly append it to the chat UI
-            
-                        if (messageData.data.chat_id === selectedChatId) {
-                            //loadChat(messageData.username, messageData.data)
-                            appendMessage(messageData.data); // Directly append the message to the active chat
-                            scrollToBottom(); // Optionally scroll to the bottom of the chat
+                        
+                        const chatId = messageData.data.username;
+                        const lastMessageText = 
+                            `${messageData.data.is_admin ? messageData.data.admin_email : messageData.data.username}: ${messageData.data.comment.substring(0, 30)}`;
+                        
+                        // Check if chat already exists in the userChatsList
+                        let existingChatItem = document.querySelector(`li[data-chatId="${chatId}"]`);
+                        console.log('last message text:', messageData.data);
+                        if (existingChatItem) {
+                            // Update the last message and move the chat to the top
+                            existingChatItem.textContent = lastMessageText;
+                            userChatsList.removeChild(existingChatItem);  // Remove from current position
+                            userChatsList.insertBefore(existingChatItem, userChatsList.firstChild);  // Move to top
                         } else {
-                            // Re-fetch all chats to ensure other chats are updated (optional)
-                            fetchUserChats();
+                            // If the chat does not exist, create a new chat list item and add it to the top
+                            const newListItem = document.createElement('li');
+                            newListItem.setAttribute('data-chatId', chatId);
+                            newListItem.textContent = lastMessageText;
+                
+                            // Add event listener to load chat when clicked
+                            newListItem.addEventListener('click', async () => {
+                                selectedUser = chatId;
+                                selectedChatId = await getChatId(email, chatId);
+                                loadChat(chatId); // Load chat when clicked
+                            });
+                
+                            // Insert the new chat at the top of the list
+                            userChatsList.insertBefore(newListItem, userChatsList.firstChild);
                         }
-                        //fetchUserChats(); 
+                
+                        // If the message belongs to the currently selected chat, append it to the chat view
+                        if (messageData.data.chat_id === selectedChatId) {
+                            appendMessage(messageData.data);
+                            scrollToBottom();  // Scroll to the bottom of the chat
+                        }
                     }
             
                     if (messageData.type === 'chat_archived') {
