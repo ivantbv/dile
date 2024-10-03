@@ -361,7 +361,7 @@ import './shoutbox.js';
             }
         }
         
-
+        let selectedChatId = null; //Track current chatid
         // Conditional rendering based on whether the user is an admin or a regular user
         if (isAdmin) {
             shoutboxContainer.innerHTML = `
@@ -436,7 +436,7 @@ import './shoutbox.js';
             adminUsernameInput.value = email;
     
             let selectedUser = null;  // Track which user's chat is being viewed
-            let selectedChatId = null; //Track current chatid
+            
             function showAdminChatView() {
                 userChatsListContainer.style.display = 'none';
                 adminChatView.style.display = 'block';
@@ -512,39 +512,37 @@ import './shoutbox.js';
                         userChats[chatKey].push(message);
                     });
             
-                    console.log(userChats, 'user chatsssssss!!!!!!!!!');
+                      // Sort chats by the latest message timestamp in descending order
+                    const sortedChats = Object.entries(userChats).sort((a, b) => {
+                        const lastMessageA = a[1][a[1].length - 1];
+                        const lastMessageB = b[1][b[1].length - 1];
+                        return new Date(lastMessageB.created_at) - new Date(lastMessageA.created_at);
+                    });
             
                     userChatsList.innerHTML = '';
                     archivedChatsList.innerHTML = '';
-                    for (const [username, messages] of Object.entries(userChats)) {
+                    sortedChats.forEach(([username, messages]) => {
                         const listItem = document.createElement('li');
                         listItem.setAttribute('data-chatId', username);
                         
-                        // Determine who made the latest comment: admin or user
-
-                        //listItem.textContent = `${lastMessageSender}: ${lastMessage.comment.substring(0, 30)}`;
-
                         const lastMessage = messages[messages.length - 1];
                         const lastMessageSender = lastMessage.is_admin ? lastMessage.admin_email : lastMessage.username;
-
                         
                         listItem.textContent = `${lastMessageSender}: ${lastMessage.comment.substring(0, 30)}`;
                         listItem.addEventListener('click', async (e) => {
-                            console.log(username, 'username value');
                             selectedUser = username;
                             selectedChatId = await getChatId(email, username);
-                            console.log(selectedChatId, 'CHAT ID FROM LIST ITEM CLICK');
                             loadChat(username);
                         });
-                         // Check if chat is archived or not
+            
+                        // Append the item to the appropriate list (archived or active)
                         if (archivedChatIds.includes(messages[0].chat_id)) {
-                            // Append to archived chat list
                             archivedChatsList.appendChild(listItem);
                         } else {
-                            // Append to non-archived chat list
                             userChatsList.appendChild(listItem);
                         }
-                    }
+                    });
+            
             
                     if (adminChatView.style.display === 'none') {
                         userChatsListContainer.style.display = 'block';
@@ -665,13 +663,25 @@ import './shoutbox.js';
                             newListItem.addEventListener('click', async () => {
                                 selectedUser = chatId;
                                 selectedChatId = await getChatId(email, chatId);
+
+                                console.log('Message received:', messageData);
+                                console.log('Chat ID (from message):', messageData.data.chat_id);
+
+                                const message = JSON.stringify({
+                                    type: 'chat_selected',
+                                    chat_id: selectedChatId,
+                                    username: selectedUser
+                                });
+                                ws.send(message); 
+                                
                                 loadChat(chatId); // Load chat when clicked
                             });
                 
                             // Insert the new chat at the top of the list
                             userChatsList.insertBefore(newListItem, userChatsList.firstChild);
                         }
-                
+                        console.log('Selected Chat ID (current):', selectedChatId, 'and message data chat_id: ',
+                        messageData.data.chat_id);
                         // If the message belongs to the currently selected chat, append it to the chat view
                         if (messageData.data.chat_id === selectedChatId) {
                             appendMessage(messageData.data);
@@ -835,16 +845,30 @@ import './shoutbox.js';
             
                 ws.onmessage = function (event) {
                     const messageData = JSON.parse(event.data);
-            
+                    
+                    if (messageData.type === 'chat_selected') {
+                        console.log('Admin selected chat:', messageData.chat_id);
+                
+                        // Automatically assign the selected chat ID on the user side
+                        selectedChatId = messageData.chat_id;
+                        loadChat(messageData.username);  // Optionally load the chat for the user
+                    }
+
                     if (messageData.type === 'new_message') {
-                        console.log('New message received userside:', messageData.data);
-                        // Update the chat window immediately with the new message
-                        // You could fetch the new message or directly append it to the chat UI
-            
-                        // Optionally, re-fetch all chats to reflect any other changes
-                        appendMessage(messageData.data);
-                        //fetchUserMessages()
-                        scrollToBottom();
+                        if (!selectedChatId) {
+                            selectedChatId = messageData.data.chat_id;
+                            console.log('Automatically setting selectedChatId:', selectedChatId);
+                        }
+
+                        console.log('New message received userside:', messageData.data, 'AND SELECTED CHAT ID: ',
+                        selectedChatId);
+                        if (messageData.data.chat_id === selectedChatId) {
+                            console.log('Appending message to correct chat:', messageData.data);
+                            appendMessage(messageData.data);
+                            scrollToBottom();
+                        } else {
+                            console.log('Message does not belong to this chat, ignoring.');
+                        }
                         // fetchUserMessages(); 
                     }
             
