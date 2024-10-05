@@ -8,6 +8,7 @@ import pkg from 'pg';
 const { Client } = pkg;
 import { WebSocketServer } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
+import { URL } from 'url'; //new import to add to the x5 adminshoutbox!
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -379,7 +380,72 @@ function broadcastUpdate(type, chatMessage) {
   });
 }
 
-wss.on('connection', (ws) => {
+async function getOrCreateChatId(email, host) {
+  try {
+      const result = await client.query(
+          'SELECT chat_id FROM shoutbox WHERE username = $1 AND host = $2 AND is_archived = false LIMIT 1',
+          [email, host]
+      );
+      console.log(result.rows, 'result rows from getorcreatechatid')
+      if (result.rows.length > 0) {
+          return result.rows[0].chat_id;  // Return existing chat_id
+      } else {
+          return uuidv4();  // Create new chat_id if none found
+      }
+  } catch (error) {
+      console.error('Error getting or creating chatId:', error);
+      throw new Error('Database error');
+  }
+}
+
+wss.on('connection', async (ws, req) => {
+  // ws.id = uuidv4();  // Assign a unique identifier to each client
+  // ws.selectedChatId = null;  // Initially, no selectedChatId until they interact
+
+  // ws.send(JSON.stringify({type: 'first_time_user', chatId: ws.id}))
+  // console.log('sent ws.id: ', ws.id, 'to client')
+  const protocol = req.headers.host.startsWith('https') ? 'https' : 'http';
+  const parsedUrl = new URL(req.url, `${protocol}://${req.headers.host}`); // Use URL class to parse
+  const email = parsedUrl.searchParams.get('email');  // Extract email from the query parameters
+  const host = req.headers.origin;  // Get the host from request headers
+
+  let retries = 5; // Max number of retries
+  const retryInterval = 2000; // Retry every 2 seconds
+  const checkEmail = async () => {
+    if (!email) {
+      console.log('Email not available, retrying...');
+      retries--;
+
+      // Retry after a delay if retries remain
+      if (retries > 0) {
+        setTimeout(checkEmail, retryInterval);
+      } else {
+        console.log('Max retries reached, closing connection');
+        ws.close(); // Close connection if no email after retries
+      }
+      return;
+    }
+
+    console.log('Email received:', email);
+
+    try {
+      const chatId = await getOrCreateChatId(email, host);
+      ws.selectedChatId = chatId;
+
+      // Send the assigned chatId to the client
+      ws.send(JSON.stringify({ type: 'first_time_user', chatId }));
+      console.log('Assigned chatId:', chatId, 'to client with email:', email);
+    } catch (error) {
+      console.error('Error assigning chatId:', error);
+      ws.send(JSON.stringify({ type: 'error', message: 'Failed to assign chat ID' }));
+      ws.close(); // Close the WebSocket in case of an error
+    }
+  };
+
+  // Start the retry process
+  checkEmail();
+  ////
+
   ws.on('message', (message) => {
     if (message === 'ping') {
       ws.send('pong');

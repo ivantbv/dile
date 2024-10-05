@@ -619,9 +619,11 @@ import './shoutbox.js';
                 }
             })
     
-            function startWebSocket(wsUrl) {
-                ws = new WebSocket(wsUrl);
-            
+            function startWebSocket(wsUrl, email) {
+                //ws = new WebSocket(wsUrl);
+                const wsUrlWithParams = `${wsUrl}?email=${encodeURIComponent(email)}`;
+                ws = new WebSocket(wsUrlWithParams);
+                
                 ws.onopen = function () {
                     console.log('WebSocket connection opened');
                     fetchUserChats(); // Initial fetch when the WebSocket connection opens
@@ -633,7 +635,7 @@ import './shoutbox.js';
             
                 ws.onclose = function () {
                     console.log('WebSocket connection closed. Attempting to reconnect');
-                    startWebSocket(wsUrl); // Reconnect logic if the connection closes
+                    startWebSocket(wsUrl, email); // Reconnect logic if the connection closes
                 };
             
                 ws.onmessage = function (event) {
@@ -705,7 +707,7 @@ import './shoutbox.js';
             }
             
     
-            startWebSocket(wsUrl);
+            startWebSocket(wsUrl, email);
             
             let chatId = null;  // This will store the chat ID for the current conversation
             
@@ -826,8 +828,9 @@ import './shoutbox.js';
             });
     
             let ws;
-            function startWebSocket(wsUrl) {
-                ws = new WebSocket(wsUrl);
+            function startWebSocket(wsUrl, email) {
+                const wsUrlWithParams = `${wsUrl}?email=${encodeURIComponent(email)}`;
+                ws = new WebSocket(wsUrlWithParams);
             
                 ws.onopen = function () {
                     console.log('WebSocket connection opened');
@@ -840,12 +843,17 @@ import './shoutbox.js';
             
                 ws.onclose = function () {
                     console.log('WebSocket connection closed. Attempting to reconnect');
-                    startWebSocket(wsUrl); // Reconnect logic if the connection closes
+                    startWebSocket(wsUrl, email); // Reconnect logic if the connection closes
                 };
             
                 ws.onmessage = function (event) {
                     const messageData = JSON.parse(event.data);
                     
+                    if (messageData.type === 'first_time_user' && !selectedChatId) {
+                        selectedChatId = messageData.chatId
+                        console.log('first time user, got assigned with id: ', selectedChatId, messageData.chatId);
+                    }
+
                     if (messageData.type === 'chat_selected') {
                         console.log('Admin selected chat:', messageData.chat_id);
                 
@@ -975,8 +983,14 @@ import './shoutbox.js';
                     }
                     window.currentAdminEmail = adminEmail;  // Cache the admin email for future messages
                 }
-            
-                const chatId = await getChatId(adminEmail, username);
+                let chatId = null;
+                //const chatId = await getChatId(adminEmail, username);
+
+                if (selectedChatId) {
+                    chatId = selectedChatId
+                } else {
+                    chatId = await getChatId(adminEmail, username);
+                }
                 
                 try {
                     const response = await fetch(endpointShoutBoxComment, {
@@ -1015,7 +1029,7 @@ import './shoutbox.js';
                 userMessagesDiv.scrollTop = userMessagesDiv.scrollHeight;
             }
     
-            startWebSocket(wsUrl);
+            startWebSocket(wsUrl, email);
             fetchUserMessages();
         }
     }
