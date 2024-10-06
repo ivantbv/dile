@@ -298,12 +298,8 @@ app.post('/adminbox/comments', async (req, res) => {
     );
 
     const newComment = result.rows[0];
-    // wss.clients.forEach(client => {
-    //   if (client.readyState === client.OPEN) {
-    //     client.send(JSON.stringify(newComment));
-    //   }
-    // });
-    broadcastUpdate('new_message', newComment);
+    //broadcastUpdate('new_message', newComment);
+    broadcastToChat(_chatId, 'new_message', newComment);
     res.status(201).json(newComment);
   } catch (error) {
     console.error('Error adding comment:', error);
@@ -316,7 +312,7 @@ app.post('/adminbox/archive-chat', async (req, res) => {
   const { chatId } = req.body;
   try {
      await client.query('UPDATE shoutbox SET is_archived = true WHERE chat_id = $1', [chatId]);
-     broadcastUpdate('chat_archived' ,chatId);
+     broadcastToChat(chatId, 'chat_archived', chatId);
      res.status(200).json({ message: 'Chat archived successfully' });
   } catch (error) {
      console.error('Error archiving chat:', error);
@@ -380,6 +376,29 @@ function broadcastUpdate(type, chatMessage) {
   });
 }
 
+function broadcastToChat(chatId, type, messageData) {
+  wss.clients.forEach(client => {
+    console.log('Broadcasting to:', client.userEmail, 'Chat ID:', client.selectedChatId);
+
+    // Check if the client is in the correct chat before sending the message
+    if (client.readyState === client.OPEN) {
+     console.log(messageData, 'message data!!1111111')
+      if (client.isAdmin) {
+        console.log('Sending to admin:', client.userEmail, 'Message data:', messageData);
+        client.send(JSON.stringify({ type: type, data: messageData }));
+      } else if (client.selectedChatId === chatId) {
+        console.log('Sending to user:', client.userEmail, 'Message data:', messageData);
+        client.send(JSON.stringify({ type: type, data: messageData }));
+      } else {
+        console.log('Skipping client with chatId:', client.selectedChatId);
+      }
+    }
+    // if (client.selectedChatId === chatId && client.readyState === client.OPEN) {
+    //   client.send(JSON.stringify({ type: type, data: messageData }));
+    // }
+  });
+}
+
 async function getOrCreateChatId(email, host) {
   try {
       const result = await client.query(
@@ -431,10 +450,15 @@ wss.on('connection', async (ws, req) => {
     try {
       const chatId = await getOrCreateChatId(email, host);
       ws.selectedChatId = chatId;
+      ws.userEmail = email;
+      ws.isAdmin = isAdmin(email, host);
 
+      console.log(ws.isAdmin, 'is admin from ws')
       // Send the assigned chatId to the client
-      ws.send(JSON.stringify({ type: 'first_time_user', chatId }));
-      console.log('Assigned chatId:', chatId, 'to client with email:', email);
+      if (!ws.isAdmin) {
+        ws.send(JSON.stringify({ type: 'first_time_user', chatId }));
+        console.log('Assigned chatId:', chatId, 'to client with email:', email);
+      }
     } catch (error) {
       console.error('Error assigning chatId:', error);
       ws.send(JSON.stringify({ type: 'error', message: 'Failed to assign chat ID' }));
@@ -451,15 +475,31 @@ wss.on('connection', async (ws, req) => {
       ws.send('pong');
     } else {
       console.log('Message received from client:', message);
-      //const parsedMessage = JSON.parse(message);
-      const { comment, email, host } = message;
-      
-      // Broadcast message to all clients (adjust logic if necessary)
-      wss.clients.forEach(client => {
-        if (client.readyState === client.OPEN) {
-          client.send(JSON.stringify({ email, comment, host }));
+      const parsedMessage = JSON.parse(message);
+
+      if (parsedMessage.type === 'new_message') {
+        const { comment, email, chatId } = parsedMessage.data;
+
+        if (!chatId) {
+          console.error('Message received without chatId:', parsedMessage);
+        } else {
+          console.log('Processing message for chatId:', chatId);
         }
-      });
+  
+        // Broadcast message to clients only in the same chat
+        // if (email) {
+        //   broadcastToChat(chatId, 'new_message', { email, comment });//parsedMessage);
+        // }
+        
+      }
+      // const { comment, email, host } = message;
+      
+      // // Broadcast message to all clients (adjust logic if necessary)
+      // wss.clients.forEach(client => {
+      //   if (client.readyState === client.OPEN) {
+      //     client.send(JSON.stringify({ email, comment, host }));
+      //   }
+      // });
     }
   });
 

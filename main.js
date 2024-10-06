@@ -643,12 +643,18 @@ import './shoutbox.js';
             
                     if (messageData.type === 'new_message') {
                         
-                        const chatId = messageData.data.username;
+                        const username = messageData.data.username;
+                        console.log(username, ' usernmae in new_message for ADMIN......................!!!')
+                        if (!username) {
+                            console.error('Received message with no username:', messageData);
+                            return; // Skip further processing if there's no valid chatId
+                        }
+                        
                         const lastMessageText = 
                             `${messageData.data.is_admin ? messageData.data.admin_email : messageData.data.username}: ${messageData.data.comment.substring(0, 30)}`;
                         
                         // Check if chat already exists in the userChatsList
-                        let existingChatItem = document.querySelector(`li[data-chatId="${chatId}"]`);
+                        let existingChatItem = document.querySelector(`li[data-chatId="${username}"]`);
                         console.log('last message text:', messageData.data);
                         if (existingChatItem) {
                             // Update the last message and move the chat to the top
@@ -658,15 +664,16 @@ import './shoutbox.js';
                         } else {
                             // If the chat does not exist, create a new chat list item and add it to the top
                             const newListItem = document.createElement('li');
-                            newListItem.setAttribute('data-chatId', chatId);
+                            newListItem.setAttribute('data-chatId', username);
                             newListItem.textContent = lastMessageText;
                 
                             // Add event listener to load chat when clicked
                             newListItem.addEventListener('click', async () => {
-                                selectedUser = chatId;
-                                selectedChatId = await getChatId(email, chatId);
+                                selectedUser = username;
+                                selectedChatId = await getChatId(email, username);
 
-                                console.log('Message received:', messageData);
+                                console.log('Message received:', messageData, selectedUser, ' selected user',
+                                selectedChatId);
                                 console.log('Chat ID (from message):', messageData.data.chat_id);
 
                                 const message = JSON.stringify({
@@ -676,7 +683,7 @@ import './shoutbox.js';
                                 });
                                 ws.send(message); 
                                 
-                                loadChat(chatId); // Load chat when clicked
+                                loadChat(selectedUser); // Load chat when clicked
                             });
                 
                             // Insert the new chat at the top of the list
