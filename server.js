@@ -142,29 +142,54 @@ app.get('/shoutbox/comments', async (req, res) => {
 //     res.status(500).send('Error fetching comments');
 //   }
 // });
+
+app.get('/adminbox/get-user', async (req, res) => {
+  const chatId = req.query.chatId || '';
+
+  if (!chatId) {
+    return res.status(400).send('chatId is required.');
+  }
+
+  try {
+    const result = 
+      await client.query('SELECT username from shoutbox WHERE chat_id = $1 AND is_admin = false', [chatId]);
+    const username = result.rows[0]?.username;
+
+    if (username) {
+      res.status(200).json(username);
+    } else {
+      res.status(404).json({ error: 'Username not found for this chat' });
+    }
+
+  } catch(e) {
+    console.error('Error fetching username:', error);
+    res.status(500).send('Error fetching username');
+  }
+})
+
 app.get('/adminbox/comments', async (req, res) => {
   const host = req.headers.origin;
   const email = req.query.userEmail || '';
   const chatId = req.query.chatId || '';
-  const isAdmin = req.query.isAdmin === 'true'; // New parameter to identify admin
-  console.log(host, '<- host ', email, '<- email ', chatId, '<- chatid!');
-  
+  const isAdmin = req.query.isAdmin === 'true'; // Identify if the request is from an admin
+  console.log(host, '<- host ', email, '<- chatId ', chatId);
+
   try {
     let query = 'SELECT * FROM shoutbox WHERE host = $1';
     const queryParams = [host];
 
-    // If user request, filter by their email
-    if (email && !isAdmin) {
+    if (!isAdmin && email) {
+      // Regular user query, filtering by both host and username
       query += ' AND username = $2';
       queryParams.push(email);
     }
 
-    // If admin request, allow filtering by chatId
+    // If chatId is present, explicitly cast it to UUID
     if (chatId) {
-      query += isAdmin ? ' AND chat_id = $2' : ' AND chat_id = $3';
+      query += ' AND chat_id = $' + (queryParams.length + 1) + '::uuid';
       queryParams.push(chatId);
     }
-    
+
     query += ' ORDER BY created_at ASC';
     const result = await client.query(query, queryParams);
     res.json(result.rows);
@@ -173,6 +198,8 @@ app.get('/adminbox/comments', async (req, res) => {
     res.status(500).send('Error fetching comments');
   }
 });
+
+
 
 app.post('/adminbox/get-archived-chats', async (req, res) => {
   // Extract host directly from request headers
@@ -310,15 +337,50 @@ app.post('/adminbox/comments', async (req, res) => {
 /////
 app.post('/adminbox/archive-chat', async (req, res) => {
   const { chatId } = req.body;
+  const host = req.headers.origin;
+
   try {
-     await client.query('UPDATE shoutbox SET is_archived = true WHERE chat_id = $1', [chatId]);
-     broadcastToChat(chatId, 'chat_archived', chatId);
-     res.status(200).json({ message: 'Chat archived successfully' });
+    // Archive the chat in the database
+    await client.query('UPDATE shoutbox SET is_archived = true WHERE chat_id = $1', [chatId]);
+
+    // Get the email of the user associated with this chat
+    const result = await client.query('SELECT username FROM shoutbox WHERE chat_id = $1', [chatId]);
+    const userEmail = result.rows[0]?.username;
+
+    if (userEmail) {
+      // Create a new chat ID for this user
+      const newChatId = uuidv4();
+
+      // Optionally, insert the new chat_id into the database with is_archived = false
+      //await client.query('INSERT INTO shoutbox (chat_id, username, is_archived, host) VALUES ($1, $2, false, $3)', [newChatId, userEmail, req.headers.origin]);
+
+      // Broadcast to all clients in the current chat that it's archived
+      broadcastToChat(chatId, 'chat_archived', chatId);
+
+      // Find the WebSocket client for this user and send them the new chat ID
+      wss.clients.forEach(client => {
+        console.log(client.host, ' HOST OF THE CLIENTTTTTTT!')
+        if (client.userEmail === userEmail && client.readyState === client.OPEN) {
+          client.selectedChatId = newChatId; 
+          console.log('Sending new chat ID to user:', userEmail, newChatId);
+          client.send(JSON.stringify({
+            type: 'new_chat_id',
+            newChatId: newChatId
+          }));
+        }
+      });
+
+      res.status(200).json({ message: 'Chat archived successfully' });
+    } else {
+      res.status(404).json({ error: 'User not found for this chat' });
+    }
+
   } catch (error) {
-     console.error('Error archiving chat:', error);
-     res.status(500).json({ error: 'Failed to archive chat' });
+    console.error('Error archiving chat:', error);
+    res.status(500).json({ error: 'Failed to archive chat' });
   }
 });
+
 ///////
 
 app.post('/adminbox/get-chat-id', async (req, res) => {
@@ -332,7 +394,7 @@ app.post('/adminbox/get-chat-id', async (req, res) => {
   try {
       // Check if a chatId already exists for this conversation
       const result = await client.query(
-        'SELECT chat_id FROM shoutbox WHERE (admin_email = $1 OR admin_email IS NULL) AND username = $2 AND host = $3 LIMIT 1',
+        'SELECT chat_id FROM shoutbox WHERE (admin_email = $1 OR admin_email IS NULL) AND username = $2 AND host = $3 AND is_archived = false LIMIT 1',
         [adminEmail, userEmail, host]
       );  
 
@@ -389,8 +451,6 @@ function broadcastToChat(chatId, type, messageData) {
       } else if (client.selectedChatId === chatId) {
         console.log('Sending to user:', client.userEmail, 'Message data:', messageData);
         client.send(JSON.stringify({ type: type, data: messageData }));
-      } else {
-        console.log('Skipping client with chatId:', client.selectedChatId);
       }
     }
     // if (client.selectedChatId === chatId && client.readyState === client.OPEN) {
@@ -448,17 +508,22 @@ wss.on('connection', async (ws, req) => {
     console.log('Email received:', email);
 
     try {
-      const chatId = await getOrCreateChatId(email, host);
-      ws.selectedChatId = chatId;
-      ws.userEmail = email;
-      ws.isAdmin = isAdmin(email, host);
+      if (!ws.selectedChatId) {
+        const chatId = await getOrCreateChatId(email, host);
+        ws.selectedChatId = chatId;
 
-      console.log(ws.isAdmin, 'is admin from ws')
-      // Send the assigned chatId to the client
-      if (!ws.isAdmin) {
-        ws.send(JSON.stringify({ type: 'first_time_user', chatId }));
-        console.log('Assigned chatId:', chatId, 'to client with email:', email);
+        ws.userEmail = email;
+        ws.isAdmin = isAdmin(email, host);
+  
+        console.log(ws.isAdmin, 'is admin from ws')
+        // Send the assigned chatId to the client
+        if (!ws.isAdmin) {
+          ws.send(JSON.stringify({ type: 'first_time_user', chatId }));
+          console.log('Assigned chatId:', chatId, 'to client with email:', email);
+        }
+        
       }
+
     } catch (error) {
       console.error('Error assigning chatId:', error);
       ws.send(JSON.stringify({ type: 'error', message: 'Failed to assign chat ID' }));

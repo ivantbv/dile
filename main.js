@@ -335,6 +335,7 @@ import './shoutbox.js';
         
             if (response.ok) {
                 const data = await response.json();
+                console.log(data, 'data from getchat id from fetch user?')
                 return data.chatId;  // Assuming the server returns an existing or new chatId
             } else {
                 console.error('Failed to retrieve chatId');
@@ -504,7 +505,7 @@ import './shoutbox.js';
                     const userChats = {};
                     messages.forEach(message => {
                         // Group by chatId or username
-                        const chatKey = message.username;
+                        const chatKey = message.chat_id;
             
                         if (!userChats[chatKey]) {
                             userChats[chatKey] = [];
@@ -521,22 +522,24 @@ import './shoutbox.js';
             
                     userChatsList.innerHTML = '';
                     archivedChatsList.innerHTML = '';
-                    sortedChats.forEach(([username, messages]) => {
+                    sortedChats.forEach(([chatId, messages], idx) => {
                         const listItem = document.createElement('li');
-                        listItem.setAttribute('data-chatId', username);
+                        listItem.setAttribute('data-chatId', chatId);
                         
                         const lastMessage = messages[messages.length - 1];
                         const lastMessageSender = lastMessage.is_admin ? lastMessage.admin_email : lastMessage.username;
                         
+                        const selectedUserEmail = lastMessage.is_admin ? lastMessage.admin_email : lastMessage.username;
+            
                         listItem.textContent = `${lastMessageSender}: ${lastMessage.comment.substring(0, 30)}`;
                         listItem.addEventListener('click', async (e) => {
-                            selectedUser = username;
-                            selectedChatId = await getChatId(email, username);
-                            loadChat(username);
+                            //selectedUser = selectedUserEmail;
+                            selectedChatId = chatId; //await getChatId(email, username);
+                            console.log(selectedChatId, ' selected chat iddddddddddddd')
+                            loadChat(selectedChatId);
                         });
-            
                         // Append the item to the appropriate list (archived or active)
-                        if (archivedChatIds.includes(messages[0].chat_id)) {
+                        if (archivedChatIds.includes(chatId)) {
                             archivedChatsList.appendChild(listItem);
                         } else {
                             userChatsList.appendChild(listItem);
@@ -554,14 +557,14 @@ import './shoutbox.js';
                 }
             }     
             
-            async function loadChat(username) {
-                selectedUser = username; // Set the selected user for messaging
+            async function loadChat(selectedChatId) {
+                //selectedUser = selectedChatId; // Set the selected user for messaging
                 showAdminChatView(); // Display the admin chat view
                 adminMessagesDiv.innerHTML = ''; // Clear previous messages
             
                 try {
                     // Fetch the latest messages for this chat from the server
-                    const response = await fetch(`${endpointShoutBoxComment}?userEmail=${encodeURIComponent(username)}`);
+                    const response = await fetch(`${endpointShoutBoxComment}?chatId=${encodeURIComponent(selectedChatId)}`);
                     if (!response.ok) throw new Error('Failed to fetch messages');
                     const messages = await response.json();
                     
@@ -610,7 +613,7 @@ import './shoutbox.js';
                     });
                     if (response.ok) {
                         alert('Chat archived');
-                        disableChat();
+                        //disableChat();
                     } else {
                         console.error('Failed to archive chat: ', response.statusText);
                     }
@@ -642,11 +645,11 @@ import './shoutbox.js';
                     const messageData = JSON.parse(event.data);
             
                     if (messageData.type === 'new_message') {
-                        
+                        console.log(messageData, 'message data when admin received')
                         const username = messageData.data.username;
                         console.log(username, ' usernmae in new_message for ADMIN......................!!!')
                         if (!username) {
-                            console.error('Received message with no username:', messageData);
+                            console.error('Received message with no username:', messageData.username);
                             return; // Skip further processing if there's no valid chatId
                         }
                         
@@ -654,7 +657,7 @@ import './shoutbox.js';
                             `${messageData.data.is_admin ? messageData.data.admin_email : messageData.data.username}: ${messageData.data.comment.substring(0, 30)}`;
                         
                         // Check if chat already exists in the userChatsList
-                        let existingChatItem = document.querySelector(`li[data-chatId="${username}"]`);
+                        let existingChatItem = document.querySelector(`li[data-chatId="${messageData.data.chat_id}"]`);
                         console.log('last message text:', messageData.data);
                         if (existingChatItem) {
                             // Update the last message and move the chat to the top
@@ -664,13 +667,13 @@ import './shoutbox.js';
                         } else {
                             // If the chat does not exist, create a new chat list item and add it to the top
                             const newListItem = document.createElement('li');
-                            newListItem.setAttribute('data-chatId', username);
+                            newListItem.setAttribute('data-chatId', messageData.data.chat_id);
                             newListItem.textContent = lastMessageText;
                 
                             // Add event listener to load chat when clicked
                             newListItem.addEventListener('click', async () => {
                                 selectedUser = username;
-                                selectedChatId = await getChatId(email, username);
+                                selectedChatId = messageData.data.chat_id //await getChatId(email, username);
 
                                 console.log('Message received:', messageData, selectedUser, ' selected user',
                                 selectedChatId);
@@ -683,7 +686,7 @@ import './shoutbox.js';
                                 });
                                 ws.send(message); 
                                 
-                                loadChat(selectedUser); // Load chat when clicked
+                                loadChat(selectedChatId); // Load chat when clicked
                             });
                 
                             // Insert the new chat at the top of the list
@@ -699,7 +702,7 @@ import './shoutbox.js';
                     }
             
                     if (messageData.type === 'chat_archived') {
-                        console.log('Chat archived:', messageData.chatId);
+                        console.log('Chat archived:', messageData.chat_id);
                         // Handle archived chat updates (e.g., remove chat from active list)
                         fetchUserChats(); // Optionally, re-fetch chats to update the UI
                     }
@@ -716,28 +719,56 @@ import './shoutbox.js';
     
             startWebSocket(wsUrl, email);
             
-            let chatId = null;  // This will store the chat ID for the current conversation
-            
-
+            //let chatId = null;  // This will store the chat ID for the current conversation
+            async function getChatUsername(chatId) {
+                const response = await fetch('http://127.0.0.1:4000/adminbox/get-user', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    chatId
+                },
+            });
+        
+            if (response.ok) {
+                const data = await response.json();
+                return data.username;  // Assuming the server returns an existing or new chatId
+            } else {
+                console.error('Failed to retrieve username');
+                return null;
+            }
+            }
             
             
             adminForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const comment = adminTextarea.value;
                 
-                const username = selectedUser;  // Use the selected user's username
-                console.log('admin email before submitting:', email, 'and username -> ', username);
-                if (!username) {
-                    console.error('No user selected for messaging.');
+                //const username = selectedUser;  // Use the selected user's username
+              
+                // if (!username) {
+                //     console.error('No user selected for messaging.');
+                //     return;
+                // }
+
+                if (!selectedChatId) {
+                    console.error('No chatid selected for messaging.');
                     return;
                 }
 
-                const chatId = await getChatId(email, username);
-                console.log(chatId, 'chat id when admin submits?')
-                if (!chatId) {
-                    console.error('Failed to retrieve or create chat_id');
-                    return;
-                }
+                const queryString = `?chatId=${encodeURIComponent(selectedChatId)}`;
+                const response = await fetch('http://127.0.0.1:4000/adminbox/get-user' + queryString);
+                if (!response.ok) throw new Error('Network response was not ok');
+                selectedUser = await response.json();
+                console.log('admin email before submitting:', email, 'and selected user -> ', 
+                selectedUser, 'and selected chat it: ', selectedChatId);
+                
+                // const chatId = await getChatId(email, username);
+                // console.log(chatId, 'chat id when admin submits?')
+                // if (!chatId) {
+                //     console.error('Failed to retrieve or create chat_id');
+                //     return;
+                // }
+                //selectedUser = await getChatUsername(selectedChatId)
             
                 try {
                     const response = await fetch(endpointShoutBoxComment, {
@@ -746,7 +777,7 @@ import './shoutbox.js';
                             "Content-Type": 'application/json',
                             "email": email  // Sending the admin's email as the sender
                         },
-                        body: JSON.stringify({ comment, email: email, userEmail: selectedUser, chatId: chatId })  // Use the existing chatId
+                        body: JSON.stringify({ comment, email: email, userEmail: selectedUser, chatId: selectedChatId })  // Use the existing chatId
                     });
             
                     if (response.ok) {
@@ -840,7 +871,8 @@ import './shoutbox.js';
                 ws = new WebSocket(wsUrlWithParams);
             
                 ws.onopen = function () {
-                    console.log('WebSocket connection opened');
+                    console.log('WebSocket connection opened, chatid: ', selectedChatId);
+
                     fetchUserMessages(); // Initial fetch when the WebSocket connection opens
                 };
             
@@ -858,8 +890,39 @@ import './shoutbox.js';
                     
                     if (messageData.type === 'first_time_user' && !selectedChatId) {
                         selectedChatId = messageData.chatId
+                        fetchUserMessages();
                         console.log('first time user, got assigned with id: ', selectedChatId, messageData.chatId);
                     }
+
+                    if (messageData.type === 'new_chat_id') {
+                        // New chat ID received after chat was archived
+                        const newChatId = messageData.newChatId;
+                        console.log('New chat ID received:', newChatId);
+                       
+
+                        setTimeout(function() {
+                            console.log('Reconnecting WebSocket with new chat ID:', newChatId);
+                            selectedChatId = newChatId;
+
+                            // Clear the chat UI after receiving the new chat ID
+                            //clearChat(); 
+                            fetchUserMessages();
+
+                            // Reconnect WebSocket with the new chat ID
+                            //startWebSocket(wsUrl, email);
+                        }, 1000);  // 1 second delay to ensure the WebSocket is properly closed
+
+                        // selectedChatId = messageData.newChatId;
+                        // console.log('New chat ID received:', selectedChatId);
+                        // ws.close();
+                        // ws.onclose = function () {
+                        //     console.log('WebSocket connection closed. Attempting to reconnect');
+                        //     startWebSocket(wsUrl, email); // Reconnect logic if the connection closes
+                        // };
+
+                        //clearChat();  // Clear the chat UI
+                        //fetchUserMessages();  // Fetch new messages for the newly assigned chat ID
+                      }
 
                     if (messageData.type === 'chat_selected') {
                         console.log('Admin selected chat:', messageData.chat_id);
@@ -888,46 +951,17 @@ import './shoutbox.js';
                     }
             
                     if (messageData.type === 'chat_archived') {
-                        console.log('Chat archived:', messageData.chatId);
+                        console.log('Chat archived (its id):', messageData, 
+                        'and the selected chat id before reassigning its value: ',
+                        selectedChatId);
+
+                        //selectedChatId = messageData.data;
                         // Handle archived chat updates (e.g., remove chat from active list)
                         fetchUserMessages(); // Optionally, re-fetch chats to update the UI
+                        console.log('New chat ID assigned after chat archivation: ', selectedChatId);
                     }
                 };
             }
-            // function startWebSocket(wsUrl) {
-            //     ws = new WebSocket(wsUrl);
-    
-            //     ws.onopen = function () {
-            //         console.log('WebSocket connection opened');
-            //         fetchUserMessages();
-            //     };
-    
-            //     ws.onerror = function (error) {
-            //         console.log('WebSocket error:', error);
-            //     };
-    
-            //     ws.onclose = function () {
-            //         console.log('WebSocket connection closed. Attempting to reconnect');
-            //         startWebSocket(wsUrl);
-            //     };
-    
-            //     ws.onmessage = function (event) {
-            //         if (event.data === 'pong') {
-            //             console.log('Received pong from server');
-            //         } else {
-            //             const newMessage = JSON.parse(event.data);
-            //             if (newMessage.username === email) {  // Only display messages for the current user
-            //                 appendMessage(newMessage);
-            //             }
-            //         }
-            //     };
-    
-            //     setInterval(() => {
-            //         if (ws.readyState === WebSocket.OPEN) {
-            //             ws.send('ping');
-            //         }
-            //     }, 30000);
-            // }
     
             function appendMessage(message) {
                 const messageDiv = document.createElement('div');
@@ -953,16 +987,31 @@ import './shoutbox.js';
             }
     
             async function fetchUserMessages() {
+                if (!selectedChatId) {
+                    console.error('No chatId available for fetching messages');
+                    return;
+                }
+                //let adminEmail = window.currentAdminEmail
+                // if (!adminEmail) {
+                //     adminEmail = await fetchAdmins();
+                //     window.currentAdminEmail = adminEmail;
+                // }
+                //selectedChatId = await getChatId(adminEmail,email);
                 try {
-                    const response = await fetch(`${endpointShoutBoxComment}?userEmail=${encodeURIComponent(email)}`);
+                    console.log(email, selectedChatId, 'EMAIL AND SELECTED CHAT ID IN FETCH USER MESSAGES')
+                    const response = await fetch(`${endpointShoutBoxComment}?userEmail=${
+                        encodeURIComponent(email)
+                    }&chatId=${
+                        encodeURIComponent(selectedChatId)
+                    }`);
                     if (!response.ok) throw new Error('Network response was not ok');
                     const messages = await response.json();
                     console.log(messages, 'messages from fetchuser MESSAGES')
                     userMessagesDiv.innerHTML = '';
                     messages.forEach(message => {
-                        if (message.username === email || message.is_admin) {
+                        //if (message.username === email || message.is_admin) {
                             appendMessage(message);
-                        }
+                       // }
                         
                     });
                 } catch (error) {
@@ -992,11 +1041,14 @@ import './shoutbox.js';
                 }
                 let chatId = null;
                 //const chatId = await getChatId(adminEmail, username);
-
+                console.log('selected chat id for usr in submit: ', selectedChatId)
                 if (selectedChatId) {
+                    console.log('selected chat id is present in user submit form')
                     chatId = selectedChatId
-                } else {
+                } else { 
                     chatId = await getChatId(adminEmail, username);
+                    console.log('selected chat id is not present in the submit user form!!!111, new chat id?',
+                    chatId)
                 }
                 
                 try {
@@ -1007,7 +1059,7 @@ import './shoutbox.js';
                             "email": username
                         },
                         // body: JSON.stringify({ comment, email: email, userEmail: selectedUser, chatId: chatId })  // Use the existing chatId
-                        body: JSON.stringify({ comment, email: username, userEmail: username, chatId })  // Pass the adminEmail
+                        body: JSON.stringify({ comment, email: username, userEmail: username, chatId: selectedChatId })  // Pass the adminEmail
                     });
                     if (response.ok) {
                         const newMessage = await response.json();
@@ -1037,7 +1089,8 @@ import './shoutbox.js';
             }
     
             startWebSocket(wsUrl, email);
-            fetchUserMessages();
+            console.log('selected chat id from initial ', selectedChatId);
+            //fetchUserMessages();
         }
     }
     
