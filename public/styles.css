@@ -315,3 +315,50 @@
 .shoutbox .shoutbox-container-form button:enabled {
   background-color: #004516;
 }
+
+
+/* for admin box styles: */
+
+.shoutbox #chats-tabs-navigation {
+  display: flex;
+  justify-content: center;
+}
+
+.archived-chats-list-container,
+.user-chats-list-container {
+  display: flex;
+  flex-direction: column;
+  max-height: 408px;
+  overflow-y: scroll;
+  padding: 7px;
+}
+
+.archived-chats-list-container #archived-chats-list,
+.user-chats-list-container #user-chats-list {
+  /* margin: 3px; */
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.archived-chats-list-container #archived-chats-list li {
+  list-style: none;
+  padding: 12px 16px 13px 16px;
+  margin: 3px 2px;
+  border-radius: 5px;
+  background: #dadadaf5;
+}
+
+.archived-chats-list-container #archived-chats-list li:hover,
+.user-chats-list-container #user-chats-list li:hover {
+  background: #cbcbcb80;
+  cursor: pointer;
+}
+
+.user-chats-list-container #user-chats-list li {
+  list-style: none;
+  padding: 12px 16px 13px 16px;
+  margin: 3px 2px;
+  border-radius: 5px;
+  background: #cce5ff;
+}
+

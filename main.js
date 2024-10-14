@@ -370,20 +370,19 @@ import './shoutbox.js';
                     <div class="shoutbox-inner">
                         <div class="shoutbox-headline"></div>
                         <div class="all-chats-container">
-                            <dile-tabs selectorId="selector1" attrforselected="name" selected="userChats">
-                                <dile-tab class="tab" name="userChats">User Chats</dile-tab>
-                                <dile-tab class="tab" name="archivedChats">Archived Chats</dile-tab>
+                            <dile-tabs id="chats-tabs-navigation" selectorId="selector1" attrforselected="name" selected="userChats">
+                                <dile-tab class="tab" name="userChats">Активные Чаты</dile-tab>
+                                <dile-tab class="tab" name="archivedChats">Архивированные чаты</dile-tab>
                             </dile-tabs>
                             <dile-pages selectorId="selector1" attrforselected="name">
                                 <section name="userChats">
                                     <div class="user-chats-list-container">
-                                        <h3>User Chats</h3>
                                         <ul id="user-chats-list"></ul>
                                     </div>
                                 </section>
                                 <section name="archivedChats">
                                     <div class="archived-chats-list-container">
-                                        <h3>Archived Chats</h3>
+                                        <h3>Архив</h3>
                                         <ul id="archived-chats-list"></ul>
                                     </div>
                                 </section>
@@ -394,12 +393,12 @@ import './shoutbox.js';
                             <button id="back-to-chats">Back to All Chats</button>
                             <div class="shoutbox-messages-container">
                                 <button class="archive-chat-btn">Архивировать Чат</button>
-                                <div id="admin-comments" class="scrollable"></div>
+                                <div id="comments" class="scrollable"></div>
                             </div>
                             <div class="shoutbox-container-form">
-                                <form id="admin-shoutbox-form">
-                                    <input type="text" id="admin-username" placeholder="Admin" required readonly>
-                                    <textarea rows="5" cols="36" id="admin-comment" placeholder="Your message" required></textarea>
+                                <form id="shoutbox-form">
+                                    <input type="text" id="username" placeholder="Оператор" required readonly>
+                                    <textarea rows="5" cols="36" id="comment" placeholder="Your message" required></textarea>
                                     <button type="submit" class="shoutbox-submit-btn" disabled="">
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                             <path d="M7.89221 0.914114L7.24838 1.55794C7.096 1.71032 7.096 1.9574 7.24838 
@@ -428,11 +427,11 @@ import './shoutbox.js';
             const archivedChatsListContainer = document.querySelector('.archived-chats-list-container');
             const archivedChatsList = document.getElementById('archived-chats-list');
     
-            const adminForm = document.getElementById('admin-shoutbox-form');
-            const adminMessagesDiv = document.getElementById('admin-comments');
-            const adminUsernameInput = document.getElementById('admin-username');
+            const adminForm = document.getElementById('shoutbox-form');
+            const adminMessagesDiv = document.getElementById('comments');
+            const adminUsernameInput = document.getElementById('username');
             const adminSubmitButton = document.querySelector('.shoutbox-submit-btn');
-            const adminTextarea = document.getElementById('admin-comment');
+            const adminTextarea = document.getElementById('comment');
     
             adminUsernameInput.value = email;
     
@@ -469,8 +468,10 @@ import './shoutbox.js';
                         <small class="message-date">${new Date(message.created_at).toLocaleString()}</small>
                     </div>
                 `;
+                if (message.is_admin) {
+                    messageDiv.classList.add('user-message');
+                }
                 adminMessagesDiv.appendChild(messageDiv);
-
                 scrollToBottom(); // Scroll to the bottom after appending
             }
             
@@ -581,6 +582,9 @@ import './shoutbox.js';
                                 <small class="message-date">${new Date(message.created_at).toLocaleString()}</small>
                             </div>
                         `;
+                        if (message.is_admin) {
+                            messageDiv.classList.add('user-message');
+                        }
                         adminMessagesDiv.appendChild(messageDiv);
                     });
             
@@ -816,15 +820,15 @@ import './shoutbox.js';
                 <div class="shoutbox">
                     <div class="shoutbox-inner">
                         <div class="shoutbox-headline">
-                            <h2>User Shoutbox</h2>
+                            <h2></h2>
                         </div>
                         <div class="shoutbox-messages-container">
-                            <div id="user-comments" class="scrollable"></div>
+                            <div id="comments" class="scrollable"></div>
                         </div>
                         <div class="shoutbox-container-form">
-                            <form id="user-shoutbox-form">
-                                <input type="text" id="user-username" placeholder="Your name" required readonly>
-                                <textarea rows="5" cols="36" id="user-comment" placeholder="Your message" required></textarea>
+                            <form id="shoutbox-form">
+                                <input type="text" id="username" placeholder="Пользователь" required readonly>
+                                <textarea rows="5" cols="36" id="comment" placeholder="Your message" required></textarea>
                                 <button type="submit" class="shoutbox-submit-btn" disabled="">
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                         <path d="M7.89221 0.914114L7.24838 1.55794C7.096 1.71032 7.096 1.9574 7.24838 
@@ -844,11 +848,11 @@ import './shoutbox.js';
                 </div>
             `;
     
-            const userForm = document.getElementById('user-shoutbox-form');
-            const userMessagesDiv = document.getElementById('user-comments');
-            const userUsernameInput = document.getElementById('user-username');
+            const userForm = document.getElementById('shoutbox-form');
+            const userMessagesDiv = document.getElementById('comments');
+            const userUsernameInput = document.getElementById('username');
             const userSubmitButton = document.querySelector('.shoutbox-submit-btn');
-            const userTextarea = document.getElementById('user-comment');
+            const userTextarea = document.getElementById('comment');
     
             userUsernameInput.value = email;
     
@@ -967,12 +971,15 @@ import './shoutbox.js';
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
                 const sender = message.is_admin ? message.admin_email : message.username;
-                const userUsernameInput = document.getElementById('user-username');
+                const userUsernameInput = document.getElementById('username');
                 console.log(message.username, 'message username????????????')
                 const isUserMessage = message.username === userUsernameInput.value;
                 //const isUserMessage = message.username === email;
-                if (isUserMessage) {
-                    messageDiv.classList.add('user-message');  // Add class for user's messages
+                // if (isUserMessage) {
+                //     messageDiv.classList.add('user-message');  // Add class for user's messages
+                // }
+                if (!message.admin_email) {
+                    messageDiv.classList.add('user-message');
                 }
                 
                 messageDiv.innerHTML = `
