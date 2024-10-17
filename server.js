@@ -172,6 +172,7 @@ app.get('/adminbox/comments', async (req, res) => {
   const email = req.query.userEmail || '';
   const chatId = req.query.chatId || '';
   const isAdmin = req.query.isAdmin === 'true'; // Identify if the request is from an admin
+  const isArchived = req.query.isArchived || false;
   console.log(host, '<- host ', email, '<- chatId ', chatId);
 
   try {
@@ -190,7 +191,8 @@ app.get('/adminbox/comments', async (req, res) => {
       queryParams.push(chatId);
     }
 
-    query += ' ORDER BY created_at ASC';
+    query += ' AND is_archived = ' + isArchived + ' ORDER BY created_at ASC';
+    console.log(query, 'query at the end of get');
     const result = await client.query(query, queryParams);
     res.json(result.rows);
   } catch (error) {
@@ -199,52 +201,94 @@ app.get('/adminbox/comments', async (req, res) => {
   }
 });
 
-
-
-app.post('/adminbox/get-archived-chats', async (req, res) => {
-  // Extract host directly from request headers
+app.get('/adminbox/get-archived-chats', async (req, res) => {
   const host = req.headers.origin;
+  const email = req.query.userEmail || '';
+  const isAdmin = req.query.isAdmin === 'true';
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
+
+
+//try with this query:
+
   try {
-      const result = await client.query(
-          'SELECT chat_id, username, comment, created_at, admin_email FROM shoutbox WHERE is_archived = true AND host = $1',
-          [host]  // Use the host obtained from the headers
-      );
-      res.status(200).json(result.rows);
+    // let query = `SELECT * FROM shoutbox 
+    //               WHERE is_archived = true and host = $1`
+
+    // const queryParams = [host];
+
+    // if (!isAdmin && email) {
+    //   query += ' AND username = $2';
+    //   queryParams.push(email);
+    // }
+
+    // query += ` ORDER BY created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+    // queryParams.push(limit, offset);
+
+    // const messagesResult = await client.query(query, queryParams);
+    
+    let query = `
+          WITH latest_chats AS (
+            SELECT chat_id, MAX(created_at) as last_message_time
+            FROM shoutbox
+            WHERE is_archived = true AND host = $1
+          `;
+
+    const queryParams = [host];
+
+    // If not an admin, fetch only the user's archived chats
+    if (!isAdmin && email) {
+      query += ' AND username = $2';
+      queryParams.push(email);
+    }
+
+    query += `
+        GROUP BY chat_id
+        ORDER BY last_message_time DESC
+        LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
+      )
+      SELECT s.*
+      FROM shoutbox s
+      JOIN latest_chats lc ON s.chat_id = lc.chat_id
+      ORDER BY lc.last_message_time DESC, s.created_at ASC
+    `;
+
+    queryParams.push(limit, offset);
+
+    const messagesResult = await client.query(query, queryParams);
+    res.json(messagesResult.rows);
+    
   } catch (error) {
-      console.error('Error fetching archived chats:', error);
-      res.status(500).json({ error: 'Failed to fetch archived chats' });
+    console.error('Failed to fetch archived chats:', error);
+    res.status(500).send('Error fetching archived chats');
   }
 });
 
 
-// Endpoint to add a new comment
-// app.post('/shoutbox/comments', async (req, res) => {
-//   const { username, comment, isAdmin } = req.body;
-//   const host = req.headers.origin; // Assuming the host is sent in the headers
-//   if (!username || !comment) {
-//     return res.status(400).send('Username and comment are required');
-//   }
-//   try {
-//     const result = await client.query(
-//       'INSERT INTO shoutbox (username, comment, is_admin, host) VALUES ($1, $2, $3, $4) RETURNING *',
-//       [username, comment, isAdmin, host]
-//     );
+app.get('/adminbox/get-archived-chat', async (req, res) => {
+  const chatId = req.query.chatId;
+  const host = req.headers.origin;
 
-//     // Broadcast new comment to all WebSocket clients
-//     const newComment = result.rows[0];
-//     wss.clients.forEach(client => {
-//       if (client.readyState === client.OPEN) {
-//         console.log('Sending new comment to client:', newComment);
-//         client.send(JSON.stringify(newComment));
-//       }
-//     });
+  try {
+    // Fetch all messages for the given archived chat_id
+    const query = `
+      SELECT * FROM shoutbox 
+      WHERE chat_id = $1 AND host = $2 AND is_archived = true
+      ORDER BY created_at ASC
+    `;
+    const result = await client.query(query, [chatId, host]);
 
-//     res.json(newComment);
-//   } catch (error) {
-//     console.error('Error adding comment:', error);
-//     res.status(500).send('Error adding comment');
-//   }
-// });
+    if (result.rows.length === 0) {
+      return res.status(404).send('Chat not found');
+    }
+
+    res.json({ chat_id: chatId, messages: result.rows });
+  } catch (error) {
+    console.error('Failed to fetch archived chat:', error);
+    res.status(500).send('Error fetching archived chat');
+  }
+});
+
 
 app.post('/shoutbox/comments', async (req, res) => {
   const { comment, email } = req.body;

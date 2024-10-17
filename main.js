@@ -343,24 +343,46 @@ import './shoutbox.js';
             }
         }
 
-        async function getArchivedChats() {
-            const response = await fetch('http://127.0.0.1:4000/adminbox/get-archived-chats', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-                // No need to send the host in the body
-            });
+        let archivedChatsOffset = 0;
+        const archivedChatsLimit = 10;
         
-            if (response.ok) {
-                const data = await response.json();
-                console.log(data, 'data from getArchivedChats');
-                return data;  // Returning the archived chats
-            } else {
-                console.error('Failed to retrieve archived chats');
-                return null;
-            }
+        async function getArchivedChats(limit = archivedChatsLimit, offset = archivedChatsOffset) {
+          try {
+            const response = await fetch(`http://127.0.0.1:4000/adminbox/get-archived-chats?limit=${limit}&offset=${offset}`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const messages = await response.json();
+            console.log(messages, 'messages from get archived chats');
+        
+            // const groupedChats = {};
+            // messages.forEach(message => {
+            //   const chatKey = message.chat_id;
+            //   if (!groupedChats[chatKey]) {
+            //     groupedChats[chatKey] = [];
+            //   }
+            //   groupedChats[chatKey].push(message);
+            // });
+        
+            // console.log(groupedChats, 'grouped chats from get archived chats');
+            return messages;
+        
+          } catch (error) {
+            console.error('Failed to retrieve archived chats', error);
+            return {};
+          }
         }
+        
+        async function fetchArchivedChatById(chatId) {
+            try {
+              const response = await fetch(`http://127.0.0.1:4000/adminbox/get-archived-chat?chatId=${chatId}`);
+              if (response.ok) {
+                return await response.json();
+              }
+              throw new Error('Failed to fetch archived chat');
+            } catch (error) {
+              console.error('Error fetching archived chat:', error);
+              return null;
+            }
+          }          
         
         let selectedChatId = null; //Track current chatid
         // Conditional rendering based on whether the user is an admin or a regular user
@@ -499,9 +521,9 @@ import './shoutbox.js';
                     const response = await fetch(endpointShoutBoxComment + queryString);
                     if (!response.ok) throw new Error('Network response was not ok');
                     const messages = await response.json();
-                    const archivedChats = await getArchivedChats();
-                    console.log(archivedChats, 'archived chats after await;')
-                    const archivedChatIds = archivedChats ? archivedChats.map(chat => chat.chat_id) : [];
+                    //const archivedChats = await getArchivedChats();
+                    //console.log(archivedChats, 'archived chats after await;')
+                    //const archivedChatIds = archivedChats ? archivedChats.map(chat => chat.chat_id) : [];
 
                     const userChats = {};
                     messages.forEach(message => {
@@ -520,9 +542,9 @@ import './shoutbox.js';
                         const lastMessageB = b[1][b[1].length - 1];
                         return new Date(lastMessageB.created_at) - new Date(lastMessageA.created_at);
                     });
-            
+                    console.log(sortedChats, 'SORTED CHATS!!!!!!!!!!!!!!!!!!!!11111111')
                     userChatsList.innerHTML = '';
-                    archivedChatsList.innerHTML = '';
+                    //archivedChatsList.innerHTML = '';
                     sortedChats.forEach(([chatId, messages], idx) => {
                         const listItem = document.createElement('li');
                         listItem.setAttribute('data-chatId', chatId);
@@ -540,11 +562,11 @@ import './shoutbox.js';
                             loadChat(selectedChatId);
                         });
                         // Append the item to the appropriate list (archived or active)
-                        if (archivedChatIds.includes(chatId)) {
-                            archivedChatsList.appendChild(listItem);
-                        } else {
-                            userChatsList.appendChild(listItem);
-                        }
+                        //if (archivedChatIds.includes(chatId)) {
+                          //  archivedChatsList.appendChild(listItem);
+                        //} else {
+                        userChatsList.appendChild(listItem);
+                        //}
                     });
             
             
@@ -558,14 +580,14 @@ import './shoutbox.js';
                 }
             }     
             
-            async function loadChat(selectedChatId) {
+            async function loadChat(selectedChatId, isArchived = false) {
                 //selectedUser = selectedChatId; // Set the selected user for messaging
                 showAdminChatView(); // Display the admin chat view
                 adminMessagesDiv.innerHTML = ''; // Clear previous messages
-            
+                console.log(isArchived, 'is archived from loadchat')
                 try {
                     // Fetch the latest messages for this chat from the server
-                    const response = await fetch(`${endpointShoutBoxComment}?chatId=${encodeURIComponent(selectedChatId)}`);
+                    const response = await fetch(`${endpointShoutBoxComment}?chatId=${encodeURIComponent(selectedChatId)}&isArchived=${encodeURIComponent(isArchived)}`);
                     if (!response.ok) throw new Error('Failed to fetch messages');
                     const messages = await response.json();
                     
@@ -593,6 +615,77 @@ import './shoutbox.js';
                     console.error('Failed to load chat:', error);
                 }
             }
+
+
+            /////////////////////
+            
+            // function setupArchivedChatsScrolling() {
+            //     archivedChatsListContainer.addEventListener('scroll', async function () {
+            //         const { scrollTop, scrollHeight, clientHeight } = archivedChatsListContainer;
+            //         if (scrollTop + clientHeight >= scrollHeight - 5) {
+            //             archivedChatsOffset += archivedChatsLimit; // Increment the offset
+            //             const newArchivedChats = await getArchivedChats();
+            //             if (newArchivedChats && newArchivedChats.length > 0) {
+            //                 appendArchivedChats(newArchivedChats); // Append the new chats
+            //             }
+            //         }
+            //     });
+            // }
+            function setupArchivedChatsScrolling() {
+                archivedChatsListContainer.addEventListener('scroll', async () => {
+                  if (archivedChatsListContainer.scrollTop + archivedChatsListContainer.clientHeight >= archivedChatsListContainer.scrollHeight) {
+                    // Increment the offset by the limit
+                    archivedChatsOffset += archivedChatsLimit;
+                    const newArchivedChats = await getArchivedChats(archivedChatsLimit, archivedChatsOffset);
+                    console.log(newArchivedChats, 'NEW ARCHIVED CHATS FROM SETUPARCHIVEDCHATSSCROLLing');
+                    appendArchivedChats(newArchivedChats);
+                  }
+                });
+              }
+              
+              async function appendArchivedChats(chats) {
+                const userChats = {};
+                chats.forEach(message => {
+                    // Group by chatId or username
+                    const chatKey = message.chat_id;
+        
+                    if (!userChats[chatKey]) {
+                        userChats[chatKey] = [];
+                    }
+                    userChats[chatKey].push(message);
+                });
+
+                const sortedChats = Object.entries(userChats).sort((a, b) => {
+                  const lastMessageA = a[1][a[1].length - 1];
+                  const lastMessageB = b[1][b[1].length - 1];
+                  return new Date(lastMessageB.created_at) - new Date(lastMessageA.created_at);
+                });
+              
+                console.log(sortedChats, 'ALL THE SORTED CHATS FROM APPEND ARCHIVED CHATS?');
+                sortedChats.forEach(([chatId, messages]) => {
+                  // Avoid duplicates in the list
+                  if (!document.querySelector(`[data-chatId="${chatId}"]`)) {
+                    const listItem = document.createElement('li');
+                    listItem.setAttribute('data-chatId', chatId);
+                    console.log(chatId, messages, 'CHAT ID AND MESSAGES FROM APPEND ARCHIVED CHATS!!!');
+              
+                    // Show the last message of this chat
+                    const lastMessage = messages[messages.length - 1]; //messages[0];
+                    const lastMessageSender = lastMessage.is_admin ? lastMessage.admin_email : lastMessage.username;
+                    listItem.textContent = `${lastMessageSender}: ${lastMessage.comment.substring(0, 30)}`;
+              
+                    // Add click event to load all messages in the chat
+                    listItem.addEventListener('click', async () => {
+                      selectedChatId = chatId;
+                      console.log(selectedChatId, 'selected chat id when clicked')
+                      loadChat(selectedChatId, true); // Load full chat when clicked
+                    });
+              
+                    // Append to archived chats list without clearing it
+                    archivedChatsList.appendChild(listItem);
+                  }
+                });
+              }
             
             
             function disableChat() {
@@ -634,6 +727,11 @@ import './shoutbox.js';
                 ws.onopen = function () {
                     console.log('WebSocket connection opened');
                     fetchUserChats(); // Initial fetch when the WebSocket connection opens
+                                // Initialize the first 10 archived chats on load
+                    getArchivedChats().then(chats => {
+                        appendArchivedChats(chats);
+                        setupArchivedChatsScrolling();
+                    });
                 };
             
                 ws.onerror = function (error) {
@@ -706,12 +804,55 @@ import './shoutbox.js';
                     }
             
                     if (messageData.type === 'chat_archived') {
-                        console.log('Chat archived:', messageData.chat_id);
+                        console.log('Chat archived:', messageData.data);
                         // Handle archived chat updates (e.g., remove chat from active list)
                         fetchUserChats(); // Optionally, re-fetch chats to update the UI
+
+                        const chatId = messageData.data;
+
+                                    // Initialize the first 10 archived chats on load
+                        // setTimeout(() => {
+                        //     getArchivedChats().then(chats => {
+                        //         console.log(chats, 'chats when chat_archived !!!');
+                        //         appendArchivedChats(chats);
+                        //         setupArchivedChatsScrolling();
+                        //     });
+                        // }, 500); 
+
+                        //when I archive a chat, then start scrolling in the archived chats tab I can find
+                        //that archived chat. But if I archive again a chat, it wont' be in the archived chats
+                        //tab. I think this might be happening because of the pagination and that it only
+                        //fetches 10 chats, but if my scroll if further (or at the bottom, i.e. the last archived chat)
+                        //then this chat wont be fetched in the websocket call of getarchivedchats
+                         // Call a function to fetch the entire chat by its ID
+
+                        fetchArchivedChatById(chatId).then(archivedChat => {
+                            if (archivedChat) {
+                            const lastMessage = archivedChat.messages[archivedChat.messages.length - 1];
+                            console.log(lastMessage, 'last message from fetcharchivedchat by id when chat is archiged')
+                            const lastMessageText = 
+                            `${lastMessage.is_admin ? lastMessage.admin_email : lastMessage.username}: ${lastMessage.comment.substring(0, 30)}`;
+                        
+                            // Create new list item for archived chat
+                            const newListItem = document.createElement('li');
+                            newListItem.setAttribute('data-chatId', chatId);
+                            newListItem.textContent = lastMessageText;
+                            
+                            // Add event listener to load the archived chat when clicked
+                            newListItem.addEventListener('click', async () => {
+                                selectedChatId = chatId;
+                                loadChat(selectedChatId, true);  // Load the archived chat
+                            });
+                            
+                            // Append to the archived chats list
+                            archivedChatsList.insertBefore(newListItem, archivedChatsList.firstChild);
+                            }
+                        }).catch(error => {
+                            console.error('Error fetching archived chat:', error);
+                        });
+                        
                     }
                 };
-            
                 // Optionally remove the 30-second interval
                 // setInterval(() => {
                 //     if (ws.readyState === WebSocket.OPEN) {
@@ -815,6 +956,12 @@ import './shoutbox.js';
             }
     
             fetchUserChats();
+                        // Initialize the first 10 archived chats on load
+            getArchivedChats().then(chats => {
+                appendArchivedChats(chats);
+                setupArchivedChatsScrolling();
+            });
+
         } else {
             shoutboxContainer.innerHTML = `
                 <div class="shoutbox">
