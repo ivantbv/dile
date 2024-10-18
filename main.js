@@ -412,7 +412,7 @@ import './shoutbox.js';
                         </div>
                         
                         <div class="admin-chat-view" style="display: none;">
-                            <button id="back-to-chats">Back to All Chats</button>
+                            <button id="back-to-chats">Назад</button>
                             <div class="shoutbox-messages-container">
                                 <button class="archive-chat-btn">Архивировать Чат</button>
                                 <div id="comments" class="scrollable"></div>
@@ -420,7 +420,7 @@ import './shoutbox.js';
                             <div class="shoutbox-container-form">
                                 <form id="shoutbox-form">
                                     <input type="text" id="username" placeholder="Оператор" required readonly>
-                                    <textarea rows="5" cols="36" id="comment" placeholder="Your message" required></textarea>
+                                    <textarea rows="5" cols="36" id="comment" placeholder="Ваше сообщение" required></textarea>
                                     <button type="submit" class="shoutbox-submit-btn" disabled="">
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                             <path d="M7.89221 0.914114L7.24838 1.55794C7.096 1.71032 7.096 1.9574 7.24838 
@@ -448,7 +448,8 @@ import './shoutbox.js';
             const archiveChatButton = document.querySelector('.archive-chat-btn');
             const archivedChatsListContainer = document.querySelector('.archived-chats-list-container');
             const archivedChatsList = document.getElementById('archived-chats-list');
-    
+            const chatsTabsNavigation = document.querySelector('.shoutbox #chats-tabs-navigation');
+
             const adminForm = document.getElementById('shoutbox-form');
             const adminMessagesDiv = document.getElementById('comments');
             const adminUsernameInput = document.getElementById('username');
@@ -462,6 +463,9 @@ import './shoutbox.js';
             function showAdminChatView() {
                 userChatsListContainer.style.display = 'none';
                 adminChatView.style.display = 'block';
+                chatsTabsNavigation.style.display = 'none'
+
+                archivedChatsListContainer.style.display = 'none';
             }
             
             function hideAdminChatView() {
@@ -542,7 +546,6 @@ import './shoutbox.js';
                         const lastMessageB = b[1][b[1].length - 1];
                         return new Date(lastMessageB.created_at) - new Date(lastMessageA.created_at);
                     });
-                    console.log(sortedChats, 'SORTED CHATS!!!!!!!!!!!!!!!!!!!!11111111')
                     userChatsList.innerHTML = '';
                     //archivedChatsList.innerHTML = '';
                     sortedChats.forEach(([chatId, messages], idx) => {
@@ -637,7 +640,6 @@ import './shoutbox.js';
                     // Increment the offset by the limit
                     archivedChatsOffset += archivedChatsLimit;
                     const newArchivedChats = await getArchivedChats(archivedChatsLimit, archivedChatsOffset);
-                    console.log(newArchivedChats, 'NEW ARCHIVED CHATS FROM SETUPARCHIVEDCHATSSCROLLing');
                     appendArchivedChats(newArchivedChats);
                   }
                 });
@@ -667,7 +669,7 @@ import './shoutbox.js';
                   if (!document.querySelector(`[data-chatId="${chatId}"]`)) {
                     const listItem = document.createElement('li');
                     listItem.setAttribute('data-chatId', chatId);
-                    console.log(chatId, messages, 'CHAT ID AND MESSAGES FROM APPEND ARCHIVED CHATS!!!');
+                   
               
                     // Show the last message of this chat
                     const lastMessage = messages[messages.length - 1]; //messages[0];
@@ -697,6 +699,7 @@ import './shoutbox.js';
                 adminChatView.style.display = 'none';
                 userChatsListContainer.style.display = 'block';
                 archivedChatsListContainer.style.display = 'block';
+                chatsTabsNavigation.style.display = 'block';
             });
 
             archiveChatButton.addEventListener('click', async () => {
@@ -749,7 +752,6 @@ import './shoutbox.js';
                     if (messageData.type === 'new_message') {
                         console.log(messageData, 'message data when admin received')
                         const username = messageData.data.username;
-                        console.log(username, ' usernmae in new_message for ADMIN......................!!!')
                         if (!username) {
                             console.error('Received message with no username:', messageData.username);
                             return; // Skip further processing if there's no valid chatId
@@ -760,7 +762,6 @@ import './shoutbox.js';
                         
                         // Check if chat already exists in the userChatsList
                         let existingChatItem = document.querySelector(`li[data-chatId="${messageData.data.chat_id}"]`);
-                        console.log('last message text:', messageData.data);
                         if (existingChatItem) {
                             // Update the last message and move the chat to the top
                             existingChatItem.textContent = lastMessageText;
@@ -779,7 +780,6 @@ import './shoutbox.js';
 
                                 console.log('Message received:', messageData, selectedUser, ' selected user',
                                 selectedChatId);
-                                console.log('Chat ID (from message):', messageData.data.chat_id);
 
                                 const message = JSON.stringify({
                                     type: 'chat_selected',
@@ -975,7 +975,7 @@ import './shoutbox.js';
                         <div class="shoutbox-container-form">
                             <form id="shoutbox-form">
                                 <input type="text" id="username" placeholder="Пользователь" required readonly>
-                                <textarea rows="5" cols="36" id="comment" placeholder="Your message" required></textarea>
+                                <textarea rows="5" cols="36" id="comment" placeholder="Ваше сообщение" required></textarea>
                                 <button type="submit" class="shoutbox-submit-btn" disabled="">
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                         <path d="M7.89221 0.914114L7.24838 1.55794C7.096 1.71032 7.096 1.9574 7.24838 
